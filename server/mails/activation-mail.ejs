@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate your account</title>
+    <!-- All CSS is inside the style tag below, as requested -->
+    <style>
+        /* Reset & base styles for email clients */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .email-container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 20, 50, 0.08);
+            overflow: hidden;
+            border: 1px solid #e9edf4;
+            transition: all 0.2s ease;
+        }
+
+        /* header with brand color */
+        .email-header {
+            background: linear-gradient(145deg, #1a3a6b, #0f2a4f);
+            padding: 32px 40px 24px;
+            text-align: center;
+        }
+
+        .email-header h1 {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .email-header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            margin-top: 6px;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+        }
+
+        /* main content */
+        .email-body {
+            padding: 40px 40px 32px;
+            background-color: #ffffff;
+        }
+
+        .greeting {
+            font-size: 22px;
+            font-weight: 600;
+            color: #0b1e3a;
+            margin-bottom: 12px;
+        }
+
+        .greeting span {
+            color: #1a3a6b;
+            background: #eef4ff;
+            padding: 0 8px;
+            border-radius: 6px;
+        }
+
+        .message {
+            font-size: 17px;
+            line-height: 1.6;
+            color: #1f2a44;
+            margin: 16px 0 28px;
+        }
+
+        .message strong {
+            color: #0f2a4f;
+        }
+
+        /* activation code box — prominent */
+        .code-box {
+            background: #f0f5fe;
+            border-radius: 18px;
+            padding: 20px 24px;
+            text-align: center;
+            border: 1px dashed #2b4f8c;
+            margin: 20px 0 28px;
+        }
+
+        .code-label {
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #3d5f8f;
+            margin-bottom: 6px;
+        }
+
+        .code-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: #0b1e3a;
+            background: #ffffff;
+            display: inline-block;
+            padding: 6px 28px;
+            border-radius: 60px;
+            letter-spacing: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            border: 1px solid #d6e2f5;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-value::before {
+            content: "🔑 ";
+            font-size: 28px;
+            letter-spacing: 0;
+        }
+
+        /* instruction / cta */
+        .action-text {
+            font-size: 16px;
+            color: #1f2a44;
+            margin: 18px 0 10px;
+            text-align: center;
+        }
+
+        .action-text a {
+            color: #1a3a6b;
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 2px solid #b4ccf0;
+            transition: border 0.15s;
+        }
+
+        .action-text a:hover {
+            border-bottom-color: #1a3a6b;
+        }
+
+        .note {
+            font-size: 14px;
+            color: #5b6f92;
+            background: #f8faff;
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-top: 24px;
+            border-left: 4px solid #2b4f8c;
+            line-height: 1.5;
+        }
+
+        .note i {
+            font-style: normal;
+            background: #e9effa;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            color: #1a3a6b;
+        }
+
+        /* footer */
+        .email-footer {
+            background-color: #fafcff;
+            padding: 24px 40px;
+            border-top: 1px solid #e9edf4;
+            text-align: center;
+            color: #5e7296;
+            font-size: 14px;
+        }
+
+        .email-footer p {
+            margin: 0 0 4px;
+        }
+
+        .email-footer .brand {
+            font-weight: 500;
+            color: #1a3a6b;
+        }
+
+        .email-footer .small-note {
+            font-size: 13px;
+            color: #7b8db0;
+        }
+
+        /* responsive */
+        @media (max-width: 520px) {
+            .email-body {
+                padding: 28px 20px;
+            }
+
+            .email-header {
+                padding: 24px 20px;
+            }
+
+            .email-header h1 {
+                font-size: 22px;
+            }
+
+            .code-value {
+                font-size: 32px;
+                padding: 6px 16px;
+                letter-spacing: 2px;
+            }
+
+            .greeting {
+                font-size: 20px;
+            }
+
+            .email-footer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <!-- header -->
+        <div class="email-header">
+            <h1>✨ Verify your account</h1>
+            <p>One last step to get started</p>
+        </div>
+
+        <!-- body -->
+        <div class="email-body">
+            <!-- dynamic user name -->
+            <div class="greeting">
+                Hey <span>
+                    <%= user.name %>
+                </span> 👋
+            </div>
+
+            <p class="message">
+                Thanks for joining us on Learning Management System! Please confirm your email address by using the
+                activation code below.
+                This code is valid for <strong>10 Minutes</strong>.
+            </p>
+
+            <!-- activation code block with dynamic value -->
+            <div class="code-box">
+                <div class="code-label">Your activation code</div>
+                <div class="code-value">
+                    <%= activationCode %>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- footer -->
+        <div class="email-footer">
+            <p><span class="brand">MyApp</span> · secure &amp; trusted</p>
+            <p class="small-note">This is an automated message, do not reply.</p>
+            <p class="small-note" style="margin-top: 6px; opacity: 0.7;">
+                &copy; 2026 MyApp. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

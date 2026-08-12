@@ -1,0 +1,6 @@
+*.txt
+*.md
+
+node_modules
+**/.env
+**/.env.local
