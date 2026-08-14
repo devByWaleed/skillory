@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        /* Reset & base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a3a6b, #0f2a4f);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 30px 15px;
+        }
+
+        .email-container {
+            max-width: 580px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Header area */
+        .email-header {
+            text-align: center;
+            padding: 20px 20px 30px;
+            color: #ffffff;
+        }
+
+        .email-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .email-header p {
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.95;
+        }
+
+        /* White Order Card */
+        .order-card {
+            background-color: #ffffff;
+            border-radius: 18px;
+            padding: 35px 30px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-title {
+            text-align: center;
+            color: #16a34a;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 28px;
+        }
+
+        /* Order Meta Info Row */
+        .order-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #374151;
+            font-weight: 600;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+
+        /* Order Items Table */
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .order-table th {
+            text-align: left;
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding-bottom: 14px;
+            font-weight: 700;
+        }
+
+        .order-table th.center,
+        .order-table td.center {
+            text-align: center;
+        }
+
+        .order-table th.right,
+        .order-table td.right {
+            text-align: right;
+        }
+
+        .order-table td {
+            padding: 16px 0;
+            font-size: 14px;
+            color: #111827;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
+        }
+
+        .item-name {
+            font-weight: 500;
+            line-height: 1.5;
+            padding-right: 15px;
+        }
+
+        /* Order Summary Subtotal/Total */
+        .summary-section {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: flex-end;
+            padding: 6px 0;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .summary-label {
+            width: 100px;
+            text-align: right;
+            padding-right: 40px;
+            font-weight: 500;
+        }
+
+        .summary-value {
+            width: 80px;
+            text-align: right;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .summary-row.total {
+            margin-top: 4px;
+            font-weight: 700;
+        }
+
+        .summary-row.total .summary-label,
+        .summary-row.total .summary-value {
+            font-weight: 700;
+            color: #000000;
+        }
+
+        /* Footer */
+        .email-footer {
+            text-align: center;
+            padding: 30px 20px 10px;
+            color: #ffffff;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .email-footer a {
+            color: #ffffff;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        .copyright {
+            margin-top: 12px;
+            opacity: 0.85;
+            font-size: 12px;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 520px) {
+            body {
+                padding: 15px 10px;
+            }
+
+            .order-card {
+                padding: 25px 18px;
+            }
+
+            .email-header h1 {
+                font-size: 22px;
+            }
+
+            .order-meta {
+                flex-direction: column;
+                gap: 6px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+
+        <!-- Header -->
+        <div class="email-header">
+            <h1>Your Skillory order is confirmed!</h1>
+            <p>And we're just as excited as you are.</p>
+        </div>
+
+        <!-- Order Details White Card -->
+        <div class="order-card">
+            <h2 class="card-title">Here's what you ordered:</h2>
+
+            <!-- Order Meta -->
+            <div class="order-meta">
+                <span>Order #: <%= order._id %></span>
+                <span>Order Date: <%= order.date %></span>
+            </div>
+
+            <!-- Items Table -->
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>ITEM</th>
+                        <th class="center">QTY</th>
+                        <th class="right">COST</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="item-name">
+                            <%= order.name %>
+                        </td>
+                        <td class="center">1</td>
+                        <td class="right">$<%= order.price %>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Summary Table -->
+            <div class="summary-section">
+                <div class="summary-row">
+                    <span class="summary-label">Subtotal:</span>
+                    <span class="summary-value">$<%= order.price %></span>
+                </div>
+                <div class="summary-row total">
+                    <span class="summary-label">Total:</span>
+                    <span class="summary-value">$<%= order.price %></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <p>If you have any questions, please contact our support team at <a
+                    href="mailto:support@becodemy.com">support@becodemy.com</a></p>
+            <p class="copyright">&copy; <%= new Date().getFullYear() %> Skillory. All rights reserved.</p>
+        </div>
+
+    </div>
+</body>
+
+</html>

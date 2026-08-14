@@ -7,6 +7,7 @@ import { ErrorMiddleware } from "./middleware/error.js"
 import userRouter from "./routes/userRoutes.js";
 import { connectCloudinary } from "./config/cloudinary.js";
 import courseRouter from "./routes/courseRoutes.js";
+import orderRouter from "./routes/orderRoutes.js";
 
 export const app = express();
 
@@ -30,6 +31,7 @@ await connectCloudinary();
 // API Routes
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/course", courseRouter);
+app.use("/api/v1/order", orderRouter);
 
 // Testing API
 app.get("/", (req, res) => {
