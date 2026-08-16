@@ -2,7 +2,7 @@ import { type NextFunction, type Request, type Response } from "express";
 import ErrorHandler from "../config/ErrorHandler.js";
 import CatchAsyncError from "../middleware/catchAsyncErrors.js";
 import cloudinary from "cloudinary";
-import { createCourse } from "../services/courseService.js";
+import { createCourse, getAllCoursesService } from "../services/courseService.js";
 import CourseModel from "../models/Courses.js";
 import redis from "../config/redis.js";
 import mongoose from "mongoose";
@@ -10,6 +10,7 @@ import path from "path";
 import ejs from 'ejs';
 import { fileURLToPath } from 'url';
 import sendMail from "../config/nodeMailer.js";
+import NotificationModel from "../models/Notifications.js";
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -109,10 +110,10 @@ export const getSingleCourse = CatchAsyncError(async (req: Request, res: Respons
 
             // Update session in Redis with TTL in seconds
             const userIdStr = String(courseID);
-            const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
-            const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
+            // const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
+            // const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
 
-            await redis.set(userIdStr, JSON.stringify(course), "EX", redisTtlInSeconds);
+            await redis.set(userIdStr, JSON.stringify(course), "EX", 604800); // 7 days
             console.log("Hitting MongoDB");
 
             res.status(200).json({
@@ -225,6 +226,13 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
         // Add this question to our course content
         courseContent.questions.push(newQuestion);
 
+        // Create new notification
+        await NotificationModel.create({
+            userID: String(req.user._id),
+            title: "New Question Received",
+            message: `You have a new question in course: ${courseContent.title}`,
+        });
+
         // Save the updated course
         await course?.save();
 
@@ -283,6 +291,12 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
 
         if (req.user?._id === question._id) {
             // Create a notification
+            // Create new notification
+            await NotificationModel.create({
+                userID: String(req.user._id),
+                title: "New Question Reply Received",
+                message: `You have a new question in course: ${courseContent.title}`,
+            });
         } else {
             const data = {
                 name: question.user.name,
@@ -424,6 +438,54 @@ export const addReplyToReview = CatchAsyncError(async (req: Request, res: Respon
             course
         });
 
+    } catch (error: any) {
+        // return next(error);
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+
+// Get all courses -- only for admin
+export const getAllCoursesAdmin = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        getAllCoursesService(res);
+    } catch (error: any) {
+        // return next(error);
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+
+// Delete user -- only for admin
+export const deleteCourse = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const course = await CourseModel.findById(id);
+        if (!course) {
+            return next(new ErrorHandler("User Not Found", 400));
+        }
+
+        const thumbnail = course.thumbnail;
+
+        // Delete the OLD image from Cloudinary (using what's already saved in DB, not client input)
+        if (thumbnail && (thumbnail as any).public_id) {
+            await cloudinary.v2.uploader.destroy((thumbnail as any).public_id);
+        }
+
+        await course.deleteOne({ id });
+
+        // await redis.del(id);
+        // Delete session in Redis with TTL in seconds
+        const userIdStr = String(course?._id);
+        const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
+        const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
+
+        await redis.del(userIdStr, id, "EX", redisTtlInSeconds);
+
+        res.status(200).json({
+            success: true,
+            message: "Course Deleted successfully!",
+        });
     } catch (error: any) {
         // return next(error);
         return next(new ErrorHandler(error.message, 400));

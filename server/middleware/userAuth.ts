@@ -23,7 +23,7 @@ export const userAuth = CatchAsyncError(async (req: Request, res: Response, next
         const user = await redis.get(tokenDecode.id);
 
         if (!user) {
-            return next(new ErrorHandler("User not found", 400));
+            return next(new ErrorHandler("Please login to access resources", 400));
         }
 
         req.user = JSON.parse(user);

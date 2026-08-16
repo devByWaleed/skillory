@@ -8,6 +8,9 @@ import userRouter from "./routes/userRoutes.js";
 import { connectCloudinary } from "./config/cloudinary.js";
 import courseRouter from "./routes/courseRoutes.js";
 import orderRouter from "./routes/orderRoutes.js";
+import notificationRouter from "./routes/notificationRoutes.js";
+import analyticsRouter from "./routes/analyticsRoutes.js";
+import layoutRouter from "./routes/layoutRoutes.js";
 
 export const app = express();
 
@@ -32,6 +35,9 @@ await connectCloudinary();
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/course", courseRouter);
 app.use("/api/v1/order", orderRouter);
+app.use("/api/v1/notification", notificationRouter);
+app.use("/api/v1/analytics", analyticsRouter);
+app.use("/api/v1/layout", layoutRouter);
 
 // Testing API
 app.get("/", (req, res) => {

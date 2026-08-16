@@ -8,9 +8,10 @@ import ejs from 'ejs';
 import { fileURLToPath } from 'url';
 import sendMail from "../config/nodeMailer.js";
 import CourseModel from "../models/Courses.js";
-import { newOrder } from "../services/orderService.js";
+import { getAllOrdersService, newOrder } from "../services/orderService.js";
 import NotificationModel from "../models/Notifications.js";
 import UserModel from "../models/Users.js";
+import { getAllCoursesService } from "../services/courseService.js";
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -99,21 +100,12 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
 });
 
 
-
-
-
-
-
-// Upload / Create Course
-// export const PPP = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-
-//         res.status(200).json({
-//             success: true,
-//             message: "",
-//         });
-//     } catch (error: any) {
-//         // return next(error);
-//         return next(new ErrorHandler(error.message, 400));
-//     }
-// });
+// Get all users -- only for admin
+export const getAllOrders = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        getAllOrdersService(res);
+    } catch (error: any) {
+        // return next(error);
+        return next(new ErrorHandler(error.message, 400));
+    }
+});

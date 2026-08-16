@@ -135,7 +135,7 @@ const CourseSchema = new mongoose.Schema<ICourse>({
         type: Number,
         default: 0,
     },
-});
+}, { timestamps: true });
 
 
 

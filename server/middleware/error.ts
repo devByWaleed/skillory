@@ -11,6 +11,11 @@ export const ErrorMiddleware = (
     err.statusCode = err.statusCode || 500;
     err.message = err.message || "Internal Server Error";
 
+    // If headers are already sent, delegate to default Express error handler
+    if (res.headersSent) {
+        return next(err);
+    }
+
     // Wrong mongodb ID error
     if (err.name === "CastError") {
         const message = `Request not found. Invalid ${err.path}`;
