@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Brand — primary indigo/violet scale */
+  --color-brand-50: #EEF2FF;
+  --color-brand-100: #E0E7FF;
+  --color-brand-200: #C7D2FE;
+  --color-brand-300: #A5B4FC;
+  --color-brand-400: #818CF8;
+  --color-brand-500: #6366F1;
+  --color-brand-600: #4F46E5;
+  --color-brand-700: #4338CA;
+  --color-brand-800: #3730A3;
+  --color-brand-900: #1E1B4B;
+
+  /* Accent — amber, for CTAs and highlights */
+  --color-accent-300: #FCD34D;
+  --color-accent-400: #FBBF24;
+  --color-accent-500: #F59E0B;
+  --color-accent-600: #D97706;
+
+  /* Surface — neutral backgrounds for cards/dashboard */
+  --color-surface-50: #F8FAFC;
+  --color-surface-100: #F1F5F9;
+  --color-surface-800: #1E293B;
+  --color-surface-900: #0F172A;
+
+  /* Fonts — mapped to next/font CSS variables from layout.tsx */
+  --font-poppins: var(--font-Poppins), sans-serif;
+  --font-josefin: var(--font-Josefin), sans-serif;
+
+  --radius-card: 1rem;
+}
+
+:root {
+  --logo-text: #1E1B4B;
+  /* brand-900, light mode */
+}
+
+.dark {
+  --logo-text: #ffffff;
+  /* white, dark mode */
+}
+
+body {
+  font-family: var(--font-poppins);
+}
