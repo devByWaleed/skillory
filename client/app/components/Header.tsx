@@ -14,6 +14,11 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
     const [active, setActive] = useState(false);
     const [openSidebar, setOpenSidebar] = useState(false);
     const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => setActive(window.scrollY > 20);
@@ -85,7 +90,9 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                         aria-label="Toggle theme"
                         className="p-2 rounded-full hover:bg-brand-50 dark:hover:bg-surface-800 transition-colors"
                     >
-                        {theme === "dark" ? (
+                        {!mounted ? (
+                            <div className="w-5 h-5" />
+                        ) : theme === "dark" ? (
                             <Sun className="w-5 h-5 text-accent-400" />
                         ) : (
                             <Moon className="w-5 h-5 text-brand-700" />
