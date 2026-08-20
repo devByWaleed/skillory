@@ -7,6 +7,7 @@ import Modal from "./utils/Modal";
 import Login from "./components/Auth/Login";
 import SignUp from "./components/Auth/SignUp";
 import Verification from "./components/Auth/Verification";
+import { useSelector } from "react-redux";
 
 
 interface Props { }
@@ -16,6 +17,11 @@ const Page: FC<Props> = (props) => {
   const [open, setOpen] = useState(false);
   const [activeItem, setActiveItem] = useState(0);
   const [route, setRoute] = useState("Login");
+
+  const { user } = useSelector((state: any) => state.auth);
+
+  console.log(user);
+
 
   return (
     <>
@@ -29,7 +35,7 @@ const Page: FC<Props> = (props) => {
 
       <Header open={open} setOpen={setOpen} activeItem={activeItem} />
       <Modal open={open} setOpen={setOpen} setRoute={setRoute}>
-        {route === "Login" && <Login setRoute={setRoute} />}
+        {route === "Login" && <Login setOpen={setOpen} setRoute={setRoute} />}
         {route === "Sign-Up" && <SignUp setRoute={setRoute} />}
         {route === "Verification" && <Verification setRoute={setRoute} />}
       </Modal>

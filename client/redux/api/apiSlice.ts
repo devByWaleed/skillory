@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { userLogin } from "../auth/authSlice";
 
 
 export const apiSlice = createApi({
@@ -6,7 +7,35 @@ export const apiSlice = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: process.env.NEXT_PUBLIC_SERVER_URI,
     }),
-    endpoints: (builders) => ({}),
+    endpoints: (builder) => ({
+        refreshToken: builder.query({
+            query: (data) => ({
+                url: "user/refresh",
+                method: "GET",
+                credentials: "include" as const,
+            })
+        }),
+        loadUser: builder.query({
+            query: (data) => ({
+                url: "user/profile",
+                method: "GET",
+                credentials: "include" as const,
+            }),
+            async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+                try {
+                    const result = await queryFulfilled;
+                    dispatch(
+                        userLogin({
+                            accessToken: result.data.activationToken,
+                            user: result.data.user
+                        })
+                    )
+                } catch (error: any) {
+                    console.log(error);
+                }
+            }
+        }),
+    }),
 });
 
-export const { } = apiSlice;
+export const { useRefreshTokenQuery, useLoadUserQuery } = apiSlice;

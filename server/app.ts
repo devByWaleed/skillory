@@ -21,7 +21,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 // CORS configuration
-const allowedOrigin = process.env.ORIGIN;
+const allowedOrigin = ["http://localhost:3000"]
 app.use(cors({
     origin: allowedOrigin,
     credentials: true,

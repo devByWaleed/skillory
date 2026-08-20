@@ -1,15 +1,25 @@
 "use client";
 import { configureStore } from '@reduxjs/toolkit';
-import { apiSlice } from "./api/apiSlice"
+import { apiSlice } from "./api/apiSlice";
+import authSlice from "./auth/authSlice";
+
 
 export const store = configureStore({
     reducer: {
-        [apiSlice.reducerPath]: apiSlice.reducer
-        // user: userReducer,
+        [apiSlice.reducerPath]: apiSlice.reducer,
+        auth: authSlice,
     },
     // Redux Toolkit automatically adds thunk middleware and devTools
     devTools: false,
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(apiSlice.middleware)
 });
 
-// export default store;
+
+// Call the refresh token function on every page load
+const initializeApp = async () => {
+    await store.dispatch(apiSlice.endpoints.refreshToken.initiate({}, { forceRefetch: true }));
+
+    await store.dispatch(apiSlice.endpoints.loadUser.initiate({}, { forceRefetch: true }));
+};
+
+initializeApp();

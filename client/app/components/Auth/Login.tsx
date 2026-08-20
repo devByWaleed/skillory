@@ -1,12 +1,17 @@
 "use client"
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { AiFillGithub, AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc";
+import { useLoginMutation } from "@/redux/auth/authApi";
+import toast from "react-hot-toast";
+import { signIn } from "next-auth/react";
+
 
 type Props = {
     setRoute: (route: string) => void;
+    setOpen: (open: boolean) => void;
 };
 
 const schema = Yup.object().shape({
@@ -14,16 +19,37 @@ const schema = Yup.object().shape({
     password: Yup.string().required("Please enter your password").min(8)
 });
 
-const Login: FC<Props> = ({ setRoute }) => {
+const Login: FC<Props> = ({ setRoute, setOpen }) => {
     const [show, setShow] = useState(false);
+    const [login, { isSuccess, isError, error, data }] = useLoginMutation();
+
+
 
     const formik = useFormik({
         initialValues: { email: "", password: "" },
         validationSchema: schema,
         onSubmit: async ({ email, password }) => {
-            console.log(email, password);
+            await login({ email, password });
         }
     });
+
+    useEffect(() => {
+        if (isSuccess) {
+            toast.success("Logged In successfully!");
+            setOpen(false);
+        }
+
+        if (error) {
+            if ("data" in error) {
+                const errorData = error as any;
+                toast.error(errorData.data.message);
+                // setInvalidError(true);
+            } else {
+                console.log("An error occured: ", error);
+            }
+        }
+    }, [isSuccess, error]);
+
 
     const { errors, touched, values, handleChange, handleSubmit } = formik;
 
@@ -116,6 +142,7 @@ const Login: FC<Props> = ({ setRoute }) => {
                     <button
                         type="button"
                         aria-label="Continue with Google"
+                        onClick={() => signIn("google")}
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full border border-slate-200 dark:border-surface-800 hover:bg-brand-50 dark:hover:bg-surface-800 transition-colors"
                     >
                         <FcGoogle className="w-5 h-5" />
@@ -125,6 +152,7 @@ const Login: FC<Props> = ({ setRoute }) => {
                     <button
                         type="button"
                         aria-label="Continue with GitHub"
+                        onClick={() => signIn("github")}
                         className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full border border-slate-200 dark:border-surface-800 hover:bg-brand-50 dark:hover:bg-surface-800 transition-colors"
                     >
                         <AiFillGithub className="w-5 h-5 text-slate-900 dark:text-white" />

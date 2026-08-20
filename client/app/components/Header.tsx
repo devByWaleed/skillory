@@ -1,6 +1,13 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import { Menu, Sun, Moon, X } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useSelector } from "react-redux";
+import Image from "next/image";
+import { assets } from "@/public/assets/assets";
+import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
+import { useLogOutMutation, useSocialAuthMutation } from "@/redux/auth/authApi";
+import toast from "react-hot-toast";
 
 type Props = {
     open: boolean;
@@ -16,6 +23,42 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
+    const { user } = useSelector((state: any) => state.auth);
+    const { data } = useSession();
+    const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
+    const socialAuthAttempted = useRef(false);
+
+    const [logOut] = useLogOutMutation();
+
+    const logoutHandler = async () => {
+        socialAuthAttempted.current = false; // allow re-auth if a different user signs in later
+        await logOut();
+        await signOut();
+    };
+
+    // Trigger social auth exactly once when a NextAuth session exists but no app user yet
+    useEffect(() => {
+        if (!user && data && !socialAuthAttempted.current) {
+            socialAuthAttempted.current = true;
+            socialAuth({
+                email: data?.user?.email ?? "",
+                name: data?.user?.name ?? "",
+                avatar: data?.user?.image ?? "",
+            });
+        }
+    }, [data, user, socialAuth]);
+
+    // React to the mutation's own result, not to data/user
+    useEffect(() => {
+        if (isSuccess) {
+            toast.success("Login successful!");
+        }
+        if (error && "data" in error) {
+            const errorData = error as any;
+            toast.error(errorData?.data?.message || "Social login failed");
+        }
+    }, [isSuccess, error]);
+
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -26,7 +69,6 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Lock body scroll while the mobile sidebar is open
     useEffect(() => {
         document.body.style.overflow = openSidebar ? "hidden" : "unset";
     }, [openSidebar]);
@@ -44,7 +86,6 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
         >
             <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
 
-                {/* Logo */}
                 <div className="flex items-center gap-2 cursor-pointer">
                     <svg viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" className="h-9 w-auto">
                         <g>
@@ -64,11 +105,8 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                             Skillory
                         </text>
                     </svg>
-
-
                 </div>
 
-                {/* Desktop nav */}
                 <nav className="hidden md:flex items-center gap-8">
                     {navItems.map((item, i) => (
                         <span
@@ -83,7 +121,6 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                     ))}
                 </nav>
 
-                {/* Right actions */}
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -99,34 +136,41 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                         )}
                     </button>
 
-                    <button
-                        onClick={() => setOpen(true)}
-                        className="hidden md:inline-block px-5 py-2 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition-colors"
-                    >
-                        Login
-                    </button>
-
+                    {user ? (
+                        <Link href="/profile">
+                            <Image
+                                src={user.avatar ? user.avatar.url : assets.default_avatar}
+                                alt="User Profile Avatar"
+                                className="w-7.5 h-7.5 rounded-full cursor-pointer"
+                                width={30}
+                                height={30}
+                            />
+                        </Link>
+                    ) : (
+                        <button
+                            onClick={() => setOpen(true)}
+                            className="hidden md:inline-block px-5 py-2 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition-colors"
+                        >
+                            Login
+                        </button>
+                    )}
 
                     <button
                         onClick={() => setOpenSidebar(true)}
                         aria-label="Open menu"
                         className="md:hidden p-2 rounded-full dark:hover:bg-surface-800"
                     >
-                        <Menu className="w-6 h-6 dark:text-white text-brand-900 " />
+                        <Menu className="w-6 h-6 dark:text-white text-brand-900" />
                     </button>
                 </div>
             </div>
 
-            {/* Mobile sidebar */}
             {openSidebar && (
                 <div
                     onClick={handleBackdropClick}
                     className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]"
                 >
-                    <aside
-                        className="fixed top-0 right-0 h-full w-[75%] max-w-sm bg-white dark:bg-surface-900 shadow-xl flex flex-col px-6 py-6 animate-in slide-in-from-right duration-300"
-                    >
-                        {/* Sidebar header */}
+                    <aside className="fixed top-0 right-0 h-full w-[75%] max-w-sm bg-white dark:bg-surface-900 shadow-xl flex flex-col px-6 py-6 animate-in slide-in-from-right duration-300">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-2">
                                 <svg width="30" height="30" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
@@ -148,7 +192,6 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                             </button>
                         </div>
 
-                        {/* Sidebar nav */}
                         <nav className="flex flex-col gap-6">
                             {navItems.map((item, i) => (
                                 <span
@@ -164,16 +207,17 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                             ))}
                         </nav>
 
-                        {/* Sidebar login */}
-                        <button
-                            onClick={() => {
-                                setOpen(true);
-                                setOpenSidebar(false);
-                            }}
-                            className="mt-auto w-full py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition-colors"
-                        >
-                            Login
-                        </button>
+                        {!user && (
+                            <button
+                                onClick={() => {
+                                    setOpen(true);
+                                    setOpenSidebar(false);
+                                }}
+                                className="mt-auto w-full py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition-colors"
+                            >
+                                Login
+                            </button>
+                        )}
                     </aside>
                 </div>
             )}
