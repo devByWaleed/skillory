@@ -326,10 +326,12 @@ interface IUpdateUserInfo {
 
 export const updateUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email, name, avatar } = req.body as IUpdateUserInfo;
+        const { name } = req.body as IUpdateUserInfo;
         const userID = req.user?._id;
         const user = await UserModel.findById(userID);
 
+        // Doesn't need
+        /*
         if (email && user) {
             const isEmailExist = await UserModel.findOne({ email });
             if (isEmailExist) {
@@ -337,6 +339,7 @@ export const updateUserInfo = CatchAsyncError(async (req: Request, res: Response
             }
             user.email = email;
         }
+        */
 
         if (name && user) {
             user.name = name;

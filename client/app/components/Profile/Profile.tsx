@@ -5,6 +5,7 @@ import { useLogOutMutation } from '@/redux/auth/authApi';
 import { signOut } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import ProfileInfo from './ProfileInfo';
+import ChangePassword from './ChangePassword';
 
 type Props = {
     user: any;
@@ -54,25 +55,10 @@ const Profile: FC<Props> = ({ user }) => {
                 {/* Main content area */}
                 <div className="flex-1 bg-white dark:bg-surface-800 rounded-2xl border border-slate-200 dark:border-surface-700 p-6 md:p-8">
                     {active === 1 && (
-                        <ProfileInfo user={user} avatar={avatar} setAvatar={setAvatar} />
-                        // <div>
-                        //     <h2 className="text-xl font-josefin font-bold text-brand-900 dark:text-white">
-                        //         My account
-                        //     </h2>
-                        //     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                        //         Manage your personal information and preferences.
-                        //     </p>
-                        // </div>
+                        <ProfileInfo user={user} avatar={avatar} />
                     )}
                     {active === 2 && (
-                        <div>
-                            <h2 className="text-xl font-josefin font-bold text-brand-900 dark:text-white">
-                                Change password
-                            </h2>
-                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                Update your password to keep your account secure.
-                            </p>
-                        </div>
+                        <ChangePassword />
                     )}
                     {active === 3 && (
                         <div>

@@ -1,51 +1,87 @@
 "use client"
-import React, { FC, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import Image from "next/image";
 import { Camera } from "lucide-react";
 import { assets } from "@/public/assets/assets";
+import { useEditProfileMutation, useUpdateAvatarMutation } from '@/redux/user/userApi';
+import { useLoadUserQuery } from '@/redux/api/apiSlice';
+import toast from 'react-hot-toast';
 
 type Props = {
     user: any;
     avatar: string | null;
-    setAvatar: (avatar: string | null) => void;
 }
 
-const schema = Yup.object().shape({
-    name: Yup.string().required("Please enter your name"),
-    email: Yup.string().email("Invalid Email!").required("Please enter your email"),
-});
+// const schema = Yup.object().shape({
+//     name: Yup.string().required("Please enter your name"),
+//     email: Yup.string().email("Invalid Email!").required("Please enter your email"),
+// });
 
-const ProfileInfo: FC<Props> = ({ user, avatar, setAvatar }) => {
+const ProfileInfo: FC<Props> = ({ user, avatar }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [name, setName] = useState(user && user.name);
+    const [updateAvatar, { isSuccess, error }] = useUpdateAvatarMutation();
+    const [editProfile, { isSuccess: success, error: updateError }] = useEditProfileMutation();
+    const [loadUser, setLoadUser] = useState(false)
+    const { } = useLoadUserQuery(undefined, { skip: true });
 
-    const formik = useFormik({
-        initialValues: {
-            name: user?.name || "",
-            email: user?.email || "",
-        },
-        validationSchema: schema,
-        enableReinitialize: true,
-        onSubmit: async (values) => {
-            console.log(values, avatar);
-        }
-    });
+    // const formik = useFormik({
+    //     initialValues: {
+    //         name: user?.name || "",
+    //         email: user?.email || "",
+    //     },
+    //     validationSchema: schema,
+    //     enableReinitialize: true,
+    //     onSubmit: async (values) => {
+    //         console.log(values, avatar);
+    //     }
+    // });
 
-    const { errors, touched, values, handleChange, handleSubmit } = formik;
+    // const { errors, touched, values, handleChange } = formik;
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            if (reader.readyState === 2) {
-                setAvatar(reader.result as string);
+        const fileReader = new FileReader();
+        fileReader.onload = () => {
+            if (fileReader.readyState === 2) {
+                const avatar = fileReader.result
+                updateAvatar(
+                    avatar
+                )
             }
         };
-        reader.readAsDataURL(file);
+        fileReader.readAsDataURL(file);
     };
+
+    useEffect(() => {
+        if (isSuccess || success) {
+            setLoadUser(true)
+        }
+
+        if (error || updateError) {
+            console.log(error);
+
+        }
+        if (success) {
+            toast.success("Profile updated successfully!");
+        }
+
+
+    }, [isSuccess, error, success, updateError])
+
+    const handleSubmit = async (e: any) => {
+        e.preventDefault();
+        if (name !== "") {
+            await editProfile({
+                name: name,
+            })
+        }
+    }
 
     return (
         <div className="w-full max-w-lg">
@@ -102,17 +138,11 @@ const ProfileInfo: FC<Props> = ({ user, avatar, setAvatar }) => {
                         id="name"
                         name="name"
                         type="text"
-                        value={values.name}
-                        onChange={handleChange}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         placeholder="Your full name"
-                        className={`mt-1.5 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-surface-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors ${errors.name && touched.name
-                            ? "border-red-500"
-                            : "border-slate-200 dark:border-surface-800"
-                            }`}
+                        className={`mt-1.5 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-surface-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 `}
                     />
-                    {errors.name && touched.name && (
-                        <span className="mt-1 block text-xs text-red-500">{errors.name}</span>
-                    )}
                 </div>
 
                 {/* Email */}
@@ -121,21 +151,12 @@ const ProfileInfo: FC<Props> = ({ user, avatar, setAvatar }) => {
                         Email
                     </label>
                     <input
-                        id="email"
-                        name="email"
-                        type="email"
+                        type="text"
                         readOnly
-                        value={values.email}
-                        onChange={handleChange}
+                        value={user?.email}
                         placeholder="you@example.com"
-                        className={`mt-1.5 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-surface-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors ${errors.email && touched.email
-                            ? "border-red-500"
-                            : "border-slate-200 dark:border-surface-800"
-                            }`}
+                        className={`mt-1.5 w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-surface-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 `}
                     />
-                    {errors.email && touched.email && (
-                        <span className="mt-1 block text-xs text-red-500">{errors.email}</span>
-                    )}
                 </div>
 
                 <button

@@ -1,6 +1,9 @@
 "use client"
 import React, { FC } from 'react'
 import { User, Lock, BookOpen, LogOut, X } from "lucide-react"
+import { MdOutlineAdminPanelSettings } from "react-icons/md";
+import Link from "next/link";
+
 
 type Props = {
     user: any;
@@ -12,13 +15,14 @@ type Props = {
     setOpenMobileSidebar: (open: boolean) => void;
 }
 
-const navItems = [
-    { id: 1, label: "My account", icon: User },
-    { id: 2, label: "Change password", icon: Lock },
-    { id: 3, label: "Enrolled courses", icon: BookOpen },
-];
 
 const SidebarProfile: FC<Props> = ({ user, avatar, active, setActive, logoutHandler, openMobileSidebar, setOpenMobileSidebar }) => {
+    const navItems = [
+        { id: 1, label: "My account", icon: User, roles: ["user", "admin"], type: "tab" },
+        { id: 2, label: "Change password", icon: Lock, roles: ["user", "admin"], type: "tab" },
+        { id: 3, label: "Enrolled courses", icon: BookOpen, roles: ["user", "admin"], type: "tab" },
+        { id: 4, label: "Admin Dashboard", icon: MdOutlineAdminPanelSettings, roles: ["admin"], type: "link", href: "/admin" },
+    ];
 
     const content = (
         <>
@@ -47,21 +51,35 @@ const SidebarProfile: FC<Props> = ({ user, avatar, active, setActive, logoutHand
 
             {/* Nav */}
             <nav className="flex flex-col gap-1">
-                {navItems.map(({ id, label, icon: Icon }) => (
-                    <button
-                        key={id}
-                        onClick={() => {
-                            setActive(id);
-                            setOpenMobileSidebar(false);
-                        }}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-colors ${active === id
-                            ? "bg-brand-50 dark:bg-surface-700 text-brand-600 dark:text-accent-400"
-                            : "text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-surface-700"
-                            }`}
-                    >
-                        <Icon className="w-4 h-4" />
-                        {label}
-                    </button>
+                {navItems.map(({ id, label, icon: Icon, roles, type, href }) => (
+                    type === "link" ? (
+                        <Link
+                            key={id}
+                            href={href!}
+                            onClick={() => setOpenMobileSidebar(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-surface-700 transition-colors"
+                        >
+                            <Icon className="w-4 h-4" />
+                            {label}
+                        </Link>
+                    ) : (
+
+                        <button
+                            key={id}
+                            onClick={() => {
+                                setActive(id);
+                                setOpenMobileSidebar(false);
+                            }}
+                            style={{ display: !roles.includes(user?.role) ? "none" : "flex" }}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-colors ${active === id
+                                ? "bg-brand-50 dark:bg-surface-700 text-brand-600 dark:text-accent-400"
+                                : "text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-surface-700"
+                                }`}
+                        >
+                            <Icon className="w-4 h-4" />
+                            {label}
+                        </button>
+                    )
                 ))}
 
                 <button
