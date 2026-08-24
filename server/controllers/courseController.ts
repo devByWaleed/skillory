@@ -11,6 +11,7 @@ import ejs from 'ejs';
 import { fileURLToPath } from 'url';
 import sendMail from "../config/nodeMailer.js";
 import NotificationModel from "../models/Notifications.js";
+import axios from "axios";
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -486,6 +487,33 @@ export const deleteCourse = CatchAsyncError(async (req: Request, res: Response, 
             success: true,
             message: "Course Deleted successfully!",
         });
+    } catch (error: any) {
+        // return next(error);
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+
+// Generate Video URL
+// Delete user -- only for admin
+export const generateVideoURL = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { videoID } = req.body;
+
+        const response = await axios.post(
+            `https://dev.vdocipher.com/api/videos/${videoID}/otp`,
+            { ttl: 300 },
+            {
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`
+
+                }
+            }
+        );
+
+        res.json(response.data);
     } catch (error: any) {
         // return next(error);
         return next(new ErrorHandler(error.message, 400));
