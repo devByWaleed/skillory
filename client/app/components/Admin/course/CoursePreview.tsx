@@ -1,7 +1,6 @@
 "use client"
 import React, { FC } from 'react'
 import Image from "next/image"
-import CoursePlayer from '@/app/utils/CoursePlayer';
 
 type Props = {
     courseInfo: any;
@@ -16,11 +15,6 @@ const CoursePreview: FC<Props> = ({ courseInfo, benefits, prerequisites, section
     return (
         <div className="w-full">
             <h2 className="text-lg font-semibold text-brand-900 dark:text-white">Course preview</h2>
-
-            <CoursePlayer
-                videoURL={courseInfo?.videoURL}
-                title={courseInfo?.title}
-            />
 
             <div className="mt-5 space-y-6">
                 {courseInfo.thumbnail && (

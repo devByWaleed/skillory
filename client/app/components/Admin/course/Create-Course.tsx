@@ -43,17 +43,6 @@ const CreateCourse: FC<Props> = () => {
         },
     ]);
 
-    // const data = {
-    //     name: courseInfo.name,
-    //     description: courseInfo.description,
-    //     price: courseInfo.price,
-    //     estimatedPrice: courseInfo.estimatedPrice,
-    //     tags: courseInfo.tags,
-    //     level: courseInfo.level,
-    //     demoURL: courseInfo.demoURL,
-    //     thumbnail: courseInfo.thumbnail
-    // };
-
     return (
         <div className="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
             <div className="flex flex-col-reverse md:flex-row gap-8">

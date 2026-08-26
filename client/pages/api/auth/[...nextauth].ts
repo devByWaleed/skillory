@@ -6,8 +6,8 @@ import GithubProvider from "next-auth/providers/github";
 export const authOptions = {
     providers: [
         GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || "",
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+            clientId: process.env.GOGGLE_CLIENT_ID || "",
+            clientSecret: process.env.GOGGLE_CLIENT_SECRET || "",
         }),
         GithubProvider({
             clientId: process.env.GITHUB_CLIENT_ID || "",
@@ -15,10 +15,7 @@ export const authOptions = {
         }),
     ],
 
-    secret: process.env.NEXTAUTH_SECRET
+    secret: process.env.SECRET
 }
 
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
-// export default NextAuth(authOptions);
+export default NextAuth(authOptions);

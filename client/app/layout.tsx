@@ -1,10 +1,15 @@
+"use client"
 import type { Metadata } from "next";
 import "./globals.css";
-import { Poppins, Josefin_Sans } from "next/font/google";
+import { Poppins } from "next/font/google";
+import { Josefin_Sans } from "next/font/google";
 import { ThemeProvider } from "./utils/Theme-provider";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "./Provider";
-import ClientWrapper from "./components/ClientWrapper";
+import { SessionProvider } from "next-auth/react";
+import { useLoadUserQuery } from "@/redux/api/apiSlice";
+import Loader from "./components/Loader/Loader";
+import { useEffect, useState } from "react";
 
 
 const poppins = Poppins({
@@ -19,12 +24,12 @@ const josefin = Josefin_Sans({
   variable: "--font-Josefin",
 });
 
-export const metadata: Metadata = {
-  title: "ELearning LMS",
-  description: "LMS Platform",
-};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html
       lang="en"
@@ -33,14 +38,35 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col">
         <Providers>
-          <ClientWrapper>
+          <SessionProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              {children}
+              <Custom>{children}</Custom>
               <Toaster position="top-center" reverseOrder={false} />
             </ThemeProvider>
-          </ClientWrapper>
+          </SessionProvider>
         </Providers>
       </body>
     </html>
   );
+}
+
+const Custom: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoading } = useLoadUserQuery({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
+  return (
+    <>
+      {
+        isLoading ? <Loader /> : <>{children}</>
+      }
+    </>
+  )
 }
