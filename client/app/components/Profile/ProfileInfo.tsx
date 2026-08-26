@@ -5,8 +5,8 @@ import * as Yup from "yup";
 import Image from "next/image";
 import { Camera } from "lucide-react";
 import { assets } from "@/public/assets/assets";
-import { useEditProfileMutation, useUpdateAvatarMutation } from '@/redux/user/userApi';
-import { useLoadUserQuery } from '@/redux/api/apiSlice';
+import { useEditProfileMutation, useUpdateAvatarMutation } from '@/redux/features/user/userApi';
+import { useLoadUserQuery } from '@/redux/features/api/apiSlice';
 import toast from 'react-hot-toast';
 
 type Props = {

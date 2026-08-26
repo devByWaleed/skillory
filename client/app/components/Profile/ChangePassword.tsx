@@ -1,5 +1,5 @@
 "use client"
-import { useUpdatePasswordMutation } from '@/redux/user/userApi';
+import { useUpdatePasswordMutation } from '@/redux/features/user/userApi';
 import React, { FC, useEffect, useState } from 'react'
 import toast from 'react-hot-toast';
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";

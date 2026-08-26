@@ -46,7 +46,7 @@ const navGroups: NavGroup[] = [
         id: "content",
         label: "Content",
         links: [
-            { label: "Create Course", href: "/admin/courses/create", icon: PlusCircle },
+            { label: "Create Course", href: "/admin/courses/create-course", icon: PlusCircle },
             { label: "Live Courses", href: "/admin/courses/live", icon: Video },
         ],
     },

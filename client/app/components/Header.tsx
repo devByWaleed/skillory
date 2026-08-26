@@ -6,7 +6,7 @@ import Image from "next/image";
 import { assets } from "@/public/assets/assets";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { useLogOutMutation, useSocialAuthMutation } from "@/redux/auth/authApi";
+import { useLogOutMutation, useSocialAuthMutation } from "@/redux/features/auth/authApi";
 import toast from "react-hot-toast";
 
 type Props = {

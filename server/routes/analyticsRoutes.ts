@@ -3,14 +3,15 @@ import express, { Router } from "express";
 
 import { authorizeRole, userAuth } from "../middleware/userAuth.js";
 import { getCourseAnalytics, getOrderAnalytics, getUserAnalytics } from "../controllers/analyticsController.js";
+import { updateAccessToken } from "../controllers/userController.js";
 
 // Annotate the router as an Express Router type
 const analyticsRouter: Router = express.Router();
 
 // Public routes
-analyticsRouter.get('/get-users-analytics', userAuth, authorizeRole("admin"), getUserAnalytics);
-analyticsRouter.get('/get-courses-analytics', userAuth, authorizeRole("admin"), getCourseAnalytics);
-analyticsRouter.get('/get-orders-analytics', userAuth, authorizeRole("admin"), getOrderAnalytics);
+analyticsRouter.get('/get-users-analytics', updateAccessToken, userAuth, authorizeRole("admin"), getUserAnalytics);
+analyticsRouter.get('/get-courses-analytics', updateAccessToken, userAuth, authorizeRole("admin"), getCourseAnalytics);
+analyticsRouter.get('/get-orders-analytics', updateAccessToken, userAuth, authorizeRole("admin"), getOrderAnalytics);
 
 
 export default analyticsRouter;

@@ -1,15 +1,39 @@
 "use client"
-import React, { FC, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import CourseOptions from './CourseOptions'
 import CourseInformation from './CourseInformation'
 import CourseData from './CourseData'
 import CourseContent from './CourseContent'
 import CoursePreview from './CoursePreview'
+import { useCreateCourseMutation } from '@/redux/features/course/courseApi'
+import toast from 'react-hot-toast'
+import { redirect } from 'next/navigation'
 
 
 type Props = {}
 
 const CreateCourse: FC<Props> = () => {
+    const [createCourse, { isLoading, isSuccess, error }] = useCreateCourseMutation()
+
+    useEffect(() => {
+        if (isSuccess) {
+            toast.success("Course created Successfully!");
+            redirect("/admin/all-courses");
+        }
+
+        if (error) {
+            if ("data" in error) {
+                const errorMessage = error as any
+                toast.error(errorMessage.data.message)
+            }
+        }
+
+
+
+    }, [isLoading, isSuccess, error])
+
+
+
     const [active, setActive] = useState(0);
 
     const [courseInfo, setCourseInfo] = useState({
@@ -42,6 +66,35 @@ const CreateCourse: FC<Props> = () => {
             ],
         },
     ]);
+
+    const handleCreateCourse = async () => {
+        // Flatten sections → flat courseData array matching CourseDataSchema,
+        // re-attaching each lecture's parent section name as videoSection
+        const formattedCourseData = sections.flatMap((section) =>
+            section.lectures.map((lecture) => ({
+                title: lecture.title,
+                description: lecture.description,
+                videoURL: lecture.videoURL,
+                videoSection: section.sectionName,
+                videoLength: Number(lecture.videoLength) || 0,
+                suggestion: lecture.suggestion,
+                links: lecture.links,
+            }))
+        );
+
+        const data = {
+            ...courseInfo,
+            price: Number(courseInfo.price) || 0,
+            estimatedPrice: Number(courseInfo.estimatedPrice) || 0,
+            benefits,
+            prerequisites,
+            courseData: formattedCourseData,
+        };
+
+        if (!isLoading) {
+            await createCourse(data);
+        }
+    };
 
     return (
         <div className="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -82,6 +135,8 @@ const CreateCourse: FC<Props> = () => {
                             sections={sections}
                             active={active}
                             setActive={setActive}
+                            handleCreateCourse={handleCreateCourse}
+                            isLoading={isLoading}
                         />
                     )}
                 </div>
