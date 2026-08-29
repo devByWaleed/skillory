@@ -46,17 +46,17 @@ const navGroups: NavGroup[] = [
         id: "content",
         label: "Content",
         links: [
-            { label: "Create Course", href: "/admin/courses/create-course", icon: PlusCircle },
-            { label: "Live Courses", href: "/admin/courses/live", icon: Video },
+            { label: "Create Course", href: "/admin/create-course", icon: PlusCircle },
+            { label: "All Courses", href: "/admin/courses/", icon: Video },
         ],
     },
     {
         id: "customization",
         label: "Customization",
         links: [
-            { label: "Hero", href: "/admin/customization/hero", icon: ImageIcon },
-            { label: "FAQ", href: "/admin/customization/faq", icon: HelpCircle },
-            { label: "Categories", href: "/admin/customization/categories", icon: Tags },
+            { label: "Hero", href: "/admin/hero", icon: ImageIcon },
+            { label: "FAQ", href: "/admin/faq", icon: HelpCircle },
+            { label: "Categories", href: "/admin/categories", icon: Tags },
         ],
     },
     {
@@ -70,9 +70,9 @@ const navGroups: NavGroup[] = [
         id: "analytics",
         label: "Analytics",
         links: [
-            { label: "Courses Analytics", href: "/admin/analytics/courses", icon: BarChart3 },
-            { label: "Orders Analytics", href: "/admin/analytics/orders", icon: ShoppingCart },
-            { label: "Users Analytics", href: "/admin/analytics/users", icon: Users },
+            { label: "Courses Analytics", href: "/admin/course-analytics", icon: BarChart3 },
+            { label: "Orders Analytics", href: "/admin/order-analytics", icon: ShoppingCart },
+            { label: "Users Analytics", href: "/admin/user-analytics", icon: Users },
         ],
     },
     {

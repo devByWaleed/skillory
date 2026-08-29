@@ -151,6 +151,7 @@ const ProfileInfo: FC<Props> = ({ user, avatar }) => {
                         Email
                     </label>
                     <input
+                        id='email'
                         type="text"
                         readOnly
                         value={user?.email}

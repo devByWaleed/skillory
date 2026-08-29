@@ -7,7 +7,7 @@ import CourseContent from './CourseContent'
 import CoursePreview from './CoursePreview'
 import { useCreateCourseMutation } from '@/redux/features/course/courseApi'
 import toast from 'react-hot-toast'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 
 type Props = {}
@@ -15,10 +15,12 @@ type Props = {}
 const CreateCourse: FC<Props> = () => {
     const [createCourse, { isLoading, isSuccess, error }] = useCreateCourseMutation()
 
+    const router = useRouter();
+
     useEffect(() => {
         if (isSuccess) {
             toast.success("Course created Successfully!");
-            redirect("/admin/all-courses");
+            router.push("/admin/all-courses");
         }
 
         if (error) {
@@ -39,6 +41,7 @@ const CreateCourse: FC<Props> = () => {
     const [courseInfo, setCourseInfo] = useState({
         name: "",
         description: "",
+        categories: "",
         price: "",
         estimatedPrice: "",
         tags: "",
@@ -137,13 +140,15 @@ const CreateCourse: FC<Props> = () => {
                             setActive={setActive}
                             handleCreateCourse={handleCreateCourse}
                             isLoading={isLoading}
+                            isEdit={false}
                         />
                     )}
                 </div>
 
                 {/* Stepper */}
                 <div className="md:w-64 shrink-0">
-                    <div className="md:sticky md:top-24 bg-white dark:bg-surface-800 border border-slate-200 dark:border-surface-700 rounded-2xl p-5">
+                    <div className="md:sticky md:top-24 bg-white dark:bg-surface-800 border 
+                    border-slate-200 dark:border-surface-700 rounded-2xl p-5">
                         <CourseOptions active={active} setActive={setActive} />
                     </div>
                 </div>

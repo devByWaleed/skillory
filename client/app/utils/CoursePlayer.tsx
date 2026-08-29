@@ -21,7 +21,7 @@ const CoursePlayer: FC<Props> = ({ videoUrl, title }) => {
         setLoading(true);
         setError("");
 
-        axios.post(`${process.env.NEXT_PUBLIC_SERVER_URI}/course/getVdoCipherOTP`, {
+        axios.post(`${process.env.NEXT_PUBLIC_SERVER_URI}course/getVdoCipherOTP`, {
             videoID: videoUrl,
         })
             .then((res) => {

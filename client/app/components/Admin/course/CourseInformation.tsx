@@ -2,10 +2,12 @@
 import React, { FC } from 'react'
 import Image from "next/image"
 import { Upload } from "lucide-react"
+import { useGetHeroDataQuery } from '@/redux/features/layout/layoutApi'
 
 type CourseInfo = {
     name: string;
     description: string;
+    categories: string;
     price: string;
     estimatedPrice: string;
     tags: string;
@@ -22,6 +24,8 @@ type Props = {
 }
 
 const CourseInformation: FC<Props> = ({ courseInfo, setCourseInfo, active, setActive }) => {
+    const { data: categoriesData } = useGetHeroDataQuery("Categories");
+
     const inputClass =
         "mt-1.5 w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-surface-800 bg-white dark:bg-surface-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors";
     const labelClass = "block text-sm font-medium text-slate-700 dark:text-slate-200";
@@ -80,6 +84,25 @@ const CourseInformation: FC<Props> = ({ courseInfo, setCourseInfo, active, setAc
                         placeholder="What will students learn in this course?"
                         className={inputClass}
                     />
+                </div>
+
+                <div>
+                    <label htmlFor="categories" className={labelClass}>Category</label>
+                    <select
+                        id="categories"
+                        name="categories"
+                        required
+                        value={courseInfo.categories}
+                        onChange={handleChange}
+                        className={inputClass}
+                    >
+                        <option value="">Select category</option>
+                        {categoriesData?.layout?.categories?.map((item: any, index: number) => (
+                            <option value={item.title} key={index}>
+                                {item.title}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div>
@@ -164,6 +187,7 @@ const CourseInformation: FC<Props> = ({ courseInfo, setCourseInfo, active, setAc
                                 src={courseInfo.thumbnail}
                                 alt="Course thumbnail preview"
                                 fill
+                                sizes="(max-width: 640px) 100vw, 600px"
                                 className="object-cover"
                             />
                         ) : (
@@ -197,4 +221,4 @@ const CourseInformation: FC<Props> = ({ courseInfo, setCourseInfo, active, setAc
     )
 }
 
-export default CourseInformation
+export default CourseInformation;

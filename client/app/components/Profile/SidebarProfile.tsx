@@ -3,6 +3,8 @@ import React, { FC } from 'react'
 import { User, Lock, BookOpen, LogOut, X } from "lucide-react"
 import { MdOutlineAdminPanelSettings } from "react-icons/md";
 import Link from "next/link";
+import { assets } from '@/public/assets/assets';
+import Image from 'next/image';
 
 
 type Props = {
@@ -30,15 +32,17 @@ const SidebarProfile: FC<Props> = ({ user, avatar, active, setActive, logoutHand
             <div className="flex flex-col items-center text-center pb-6 mb-6 border-b border-slate-200 dark:border-surface-700">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-brand-100 dark:bg-brand-900 flex items-center justify-center">
                     {avatar || user?.avatar?.url ? (
-                        <img
+                        <Image
                             src={avatar || user?.avatar?.url}
                             alt={user?.name || "User avatar"}
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <span className="text-2xl font-semibold text-brand-600 dark:text-accent-400">
-                            {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-                        </span>
+                        <Image
+                            src={assets.default_avatar}
+                            alt={user?.name || "User avatar"}
+                            className="w-full h-full object-cover"
+                        />
                     )}
                 </div>
                 <p className="mt-3 text-sm font-semibold text-brand-900 dark:text-white">

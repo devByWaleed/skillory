@@ -31,7 +31,7 @@ export const createLayout = CatchAsyncError(async (req: Request, res: Response, 
                 title,
                 subTitle
             };
-            await LayoutModel.create(banner);
+            await LayoutModel.create({ type: "Banner", banner });
         }
 
 
@@ -79,24 +79,36 @@ export const editLayout = CatchAsyncError(async (req: Request, res: Response, ne
         const { type } = req.body;
 
         if (type === "Banner") {
-            const bannerData = LayoutModel.findOne({ type: "Banner" });
+            const bannerData: any = await LayoutModel.findOne({ type: "Banner" }); // fixed: added await
             const { image, title, subTitle } = req.body;
 
-            await cloudinary.v2.uploader.destroy(bannerData?.image.public_id);
+            let bannerImage = bannerData?.banner?.image;
 
-            const myCloud = await cloudinary.v2.uploader.upload(image, {
-                folder: "LMS/layout"
-            });
-
-            const banner = {
-                image: {
+            // Only touch Cloudinary if the image actually changed (new base64 upload, not the existing URL)
+            if (image && !image.startsWith("https")) {
+                if (bannerData?.banner?.image?.public_id) {
+                    await cloudinary.v2.uploader.destroy(bannerData.banner.image.public_id);
+                }
+                const myCloud = await cloudinary.v2.uploader.upload(image, {
+                    folder: "LMS/layout"
+                });
+                bannerImage = {
                     public_id: myCloud.public_id,
                     url: myCloud.secure_url
-                },
+                };
+            }
+
+            const banner = {
+                image: bannerImage,
                 title,
                 subTitle
             };
-            await LayoutModel.findByIdAndUpdate(bannerData?.id, { banner });
+
+            if (bannerData) {
+                await LayoutModel.findByIdAndUpdate(bannerData._id, { banner });
+            } else {
+                await LayoutModel.create({ type: "Banner", banner });
+            }
         }
 
         if (type === "FAQ") {
@@ -140,7 +152,13 @@ export const editLayout = CatchAsyncError(async (req: Request, res: Response, ne
 // Get Layout By Type
 export const getLayoutByType = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { type } = req.body.type
+        const { type } = req.params;
+
+        // Validate that type exists and is a string
+        if (!type || typeof type !== "string") {
+            return next(new ErrorHandler("Layout type parameter is required", 400));
+        }
+
         const layout = await LayoutModel.findOne({ type });
 
         res.status(200).json({

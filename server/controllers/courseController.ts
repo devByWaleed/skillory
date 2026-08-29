@@ -132,34 +132,13 @@ export const getSingleCourse = CatchAsyncError(async (req: Request, res: Respons
 // Get single course --- without purchasing
 export const getAllCourses = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const isCacheExist = await redis.get("allCourses");
+        const allCourses = await CourseModel.find().select("-courseData.videoURL -courseData.suggestion -courseData.questions -courseData.links");
 
-        if (isCacheExist) {
-            const allCourses = JSON.parse(isCacheExist);
-            console.log("Hitting Redis");
+        res.status(200).json({
+            success: true,
+            allCourses
+        });
 
-            res.status(200).json({
-                success: true,
-                allCourses
-            });
-        } else {
-
-            const allCourses = await CourseModel.find().select("-courseData.videoURL -courseData.suggestion -courseData.questions -courseData.links");
-
-            // Update session in Redis with TTL in seconds
-
-            const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
-            const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
-
-            await redis.set("allCourses", JSON.stringify(allCourses), "EX", redisTtlInSeconds);
-            console.log("Hitting MongoDB");
-
-
-            res.status(200).json({
-                success: true,
-                allCourses
-            });
-        }
     } catch (error: any) {
         // return next(error);
         return next(new ErrorHandler(error.message, 400));

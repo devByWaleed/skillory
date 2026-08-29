@@ -13,9 +13,10 @@ type Props = {
     setActive: (index: number) => void;
     handleCreateCourse: () => void;
     isLoading?: boolean;
+    isEdit: boolean
 }
 
-const CoursePreview: FC<Props> = ({ courseInfo, benefits, prerequisites, sections, active, setActive, handleCreateCourse, isLoading }) => {
+const CoursePreview: FC<Props> = ({ courseInfo, benefits, prerequisites, sections, active, setActive, handleCreateCourse, isLoading, isEdit }) => {
     const totalLectures = sections.reduce((sum, s) => sum + s.lectures.length, 0);
 
     return (
@@ -132,14 +133,28 @@ const CoursePreview: FC<Props> = ({ courseInfo, benefits, prerequisites, section
                 >
                     Previous
                 </button>
-                <button
-                    type="button"
-                    onClick={handleCreateCourse}
-                    disabled={isLoading}
-                    className="px-6 py-2.5 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
-                >
-                    {isLoading ? "Creating..." : "Create course"}
-                </button>
+
+                {isEdit ? (
+                    <button
+                        type="button"
+                        onClick={handleCreateCourse}
+                        disabled={isLoading}
+                        className="px-6 py-2.5 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+                    >
+                        {isLoading ? "Editing..." : "Edit course"}
+                    </button>
+                ) : (
+
+                    <button
+                        type="button"
+                        onClick={handleCreateCourse}
+                        disabled={isLoading}
+                        className="px-6 py-2.5 rounded-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+                    >
+                        {isLoading ? "Creating..." : "Create course"}
+                    </button>
+                )}
+
             </div>
         </div>
     )
