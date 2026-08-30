@@ -8,6 +8,10 @@ import Login from "./components/Auth/Login";
 import SignUp from "./components/Auth/SignUp";
 import Verification from "./components/Auth/Verification";
 import { useSelector } from "react-redux";
+import Courses from "./components/Route/Courses";
+import Reviews from "./components/Route/Reviews";
+import FAQ from "./components/FAQ";
+import Footer from "./components/Footer";
 
 
 interface Props { }
@@ -40,6 +44,10 @@ const Page: FC<Props> = (props) => {
         {route === "Verification" && <Verification setRoute={setRoute} />}
       </Modal>
       <Hero />
+      <Courses />
+      <Reviews />
+      <FAQ />
+      <Footer />
     </>
   )
 }

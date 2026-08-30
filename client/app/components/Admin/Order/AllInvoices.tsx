@@ -33,7 +33,7 @@ const AllInvoices: FC<Props> = ({ isDashboard }) => {
                 const user = usersData?.allUsers?.find(
                     (u: any) => u._id === item.userId
                 );
-                const course = coursesData?.courses?.find(
+                const course = coursesData?.allCourses?.find(
                     (c: any) => c._id === item.courseId
                 );
 
@@ -51,20 +51,15 @@ const AllInvoices: FC<Props> = ({ isDashboard }) => {
     }, [data, usersData, coursesData]);
 
     const columns = [
-        { field: "id", headerName: "ID", flex: 0.5, minWidth: 100 },
-        { field: "userName", headerName: "Name", flex: 0.8, minWidth: 160 },
-        { field: "userEmail", headerName: "Email", flex: 1, minWidth: 200 },
-        { field: "title", headerName: "Course Title", flex: 1, minWidth: 200 },
-        { field: "price", headerName: "Price", flex: 0.5, minWidth: 100 },
+        ...(isDashboard ? [] : [{ field: "id", headerName: "ID", flex: 0.5, minWidth: 100 }]),
+        { field: "userName", headerName: "Name", flex: 0.8, minWidth: 140 },
+        ...(isDashboard ? [] : [{ field: "userEmail", headerName: "Email", flex: 1, minWidth: 200 }]),
+        { field: "title", headerName: "Course Title", flex: 1, minWidth: 160 },
+        { field: "price", headerName: "Price", flex: 0.5, minWidth: 90 },
         ...(isDashboard
             ? []
             : [
-                {
-                    field: "created_at",
-                    headerName: "Created At",
-                    flex: 0.5,
-                    minWidth: 130,
-                },
+                { field: "created_at", headerName: "Created At", flex: 0.5, minWidth: 130 },
                 {
                     field: "send_email",
                     headerName: "Email",
@@ -74,6 +69,7 @@ const AllInvoices: FC<Props> = ({ isDashboard }) => {
                     renderCell: (params: any) => (
                         <a
                             href={`mailto:${params.row.userEmail}`}
+                            target="_blank"
                             aria-label="Email Customer"
                             className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors inline-flex items-center justify-center"
                         >
@@ -92,7 +88,7 @@ const AllInvoices: FC<Props> = ({ isDashboard }) => {
     );
 
     return (
-        <div className={isDashboard ? "w-full" : "w-full"}>
+        <div className={"w-full"}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
                 <h1 className="text-xl font-josefin font-bold text-brand-900 dark:text-white">
                     {isDashboard ? "Recent Invoices" : "All Invoices"}

@@ -87,7 +87,6 @@ const DashboardWidgets: FC<Props> = () => {
 
             {/* Bottom Section: Space for Recent Transactions or Data Tables */}
             <div className="w-full">
-                {/* You can add your <RecentOrdersTable /> or extra widgets here */}
                 <AllInvoices isDashboard={true} />
             </div>
         </div>

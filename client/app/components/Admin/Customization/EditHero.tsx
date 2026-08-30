@@ -20,7 +20,7 @@ const EditHero: FC<Props> = () => {
     useEffect(() => {
         if (data) {
             setTitle(data?.layout.banner.title);
-            setSubTitle(data?.layout.banner.subTitle); // fixed: was "subtitle" (lowercase t)
+            setSubTitle(data?.layout.banner.subTitle);
             setImage(data?.layout.banner.image.url);
         }
     }, [data]);
