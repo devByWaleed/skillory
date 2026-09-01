@@ -11,8 +11,15 @@ import orderRouter from "./routes/orderRoutes.js";
 import notificationRouter from "./routes/notificationRoutes.js";
 import analyticsRouter from "./routes/analyticsRoutes.js";
 import layoutRouter from "./routes/layoutRoutes.js";
+import { stripeWebhookController } from "./controllers/orderController.js";
 
 export const app = express();
+
+app.post(
+    "/api/v1/order/webhook",
+    express.raw({ type: "application/json" }),
+    stripeWebhookController
+);
 
 // Body parser
 app.use(express.json({ limit: "50mb" }));

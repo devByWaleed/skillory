@@ -152,13 +152,29 @@ export const getCourseByUser = CatchAsyncError(async (req: Request, res: Respons
         const userCourseList = req.user?.courses;
         const courseID = req.params.id;
 
-        const isCourseExists = userCourseList?.find((course: any) => course._id.toString() === courseID);
+        const isCourseExists = userCourseList?.some((course: any) => {
+            if (!course) return false;
+
+            // Extracts ID safely across all possible schema formats
+            const targetCourseId =
+                course.courseId?._id?.toString() ||
+                course.courseId?.toString() ||
+                course._id?.toString() ||
+                (typeof course === 'string' ? course : null);
+
+            return targetCourseId === courseID;
+        });
+
         if (!isCourseExists) {
             return next(new ErrorHandler("You have no access for this course!", 404));
         }
 
         const course = await CourseModel.findById(courseID);
-        const content = course?.courseData;
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+
+        const content = course.courseData;
 
         res.status(200).json({
             success: true,
@@ -166,7 +182,6 @@ export const getCourseByUser = CatchAsyncError(async (req: Request, res: Respons
             content
         });
     } catch (error: any) {
-        // return next(error);
         return next(new ErrorHandler(error.message, 400));
     }
 });
@@ -208,7 +223,7 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
 
         // Create new notification
         await NotificationModel.create({
-            userID: String(req.user._id),
+            userID: String(req?.user._id),
             title: "New Question Received",
             message: `You have a new question in course: ${courseContent.title}`,
         });
@@ -265,7 +280,7 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
         }
 
         // Add this answer to course content
-        question.questionReplies.push(newAnswer);
+        question?.questionReplies.push(newAnswer);
 
         await course?.save();
 
@@ -474,7 +489,6 @@ export const deleteCourse = CatchAsyncError(async (req: Request, res: Response, 
 
 
 // Generate Video URL
-// Delete user -- only for admin
 export const generateVideoURL = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { videoID } = req.body;

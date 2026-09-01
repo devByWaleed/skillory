@@ -85,3 +85,45 @@ const CoursePlayer: FC<Props> = ({ videoUrl, title }) => {
 };
 
 export default CoursePlayer;
+
+
+/*
+"use client"
+import React, { FC, useEffect, useState } from 'react';
+
+type Props = {
+    title: string;
+    videoUrl: string;
+}
+
+const CoursePlayer: FC<Props> = ({ title, videoUrl }) => {
+    const [otp, setOtp] = useState("");
+
+    useEffect(() => {
+        // Example logic if using VdoCipher or external video embed OTP fetching
+        if (videoUrl) {
+            setOtp(videoUrl);
+        }
+    }, [videoUrl]);
+
+    return (
+        <div className="w-full relative pt-[56.25%] bg-black rounded-xl overflow-hidden shadow-lg border border-slate-800">
+            {videoUrl ? (
+                <iframe
+                    src={`https://player.vdocipher.com/v2/?otp=${otp}&playbackInfo=${btoa(JSON.stringify({ videoId: videoUrl }))}`}
+                    className="absolute top-0 left-0 w-full h-full border-0"
+                    allow="encrypted-media"
+                    allowFullScreen
+                    title={title || "Course Video"}
+                />
+            ) : (
+                <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-slate-400">
+                    <p className="text-sm">Select a lecture to start watching.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default CoursePlayer;
+*/
