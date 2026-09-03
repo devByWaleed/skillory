@@ -15,7 +15,10 @@ type Props = {
     activeItem: number;
 };
 
-const navItems = ["Home", "Courses", "About", "FAQ"];
+const navItems = [
+    { label: "Home", link: "/" }, { label: "Courses", link: "/all-courses" },
+    { label: "About", link: "/about" }, { label: "FAQ", link: "/faq" }
+];
 
 const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
     const [active, setActive] = useState(false);
@@ -109,15 +112,16 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
 
                 <nav className="hidden md:flex items-center gap-8">
                     {navItems.map((item, i) => (
-                        <span
+                        <Link
+                            href={item.link}
                             key={i}
                             className={`cursor-pointer text-[16px] font-medium transition-colors duration-200 ${activeItem === i
                                 ? "text-brand-600 dark:text-accent-400"
                                 : "text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-accent-400"
                                 }`}
                         >
-                            {item}
-                        </span>
+                            {item.label}
+                        </Link>
                     ))}
                 </nav>
 
@@ -194,7 +198,8 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
 
                         <nav className="flex flex-col gap-6">
                             {navItems.map((item, i) => (
-                                <span
+                                <Link
+                                    href={item.link}
                                     key={i}
                                     onClick={() => setOpenSidebar(false)}
                                     className={`cursor-pointer text-lg font-medium ${activeItem === i
@@ -202,8 +207,8 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                                         : "text-slate-700 dark:text-slate-300"
                                         }`}
                                 >
-                                    {item}
-                                </span>
+                                    {item.label}
+                                </Link>
                             ))}
                         </nav>
 

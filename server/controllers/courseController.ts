@@ -146,11 +146,52 @@ export const getAllCourses = CatchAsyncError(async (req: Request, res: Response,
 });
 
 
+// // Get Course Content
+// export const getCourseByUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         const userCourseList = req.user?.courses;
+//         const courseID = req.params.id;
+
+//         const isCourseExists = userCourseList?.some((course: any) => {
+//             if (!course) return false;
+
+//             // Extracts ID safely across all possible schema formats
+//             const targetCourseId =
+//                 course.courseId?._id?.toString() ||
+//                 course.courseId?.toString() ||
+//                 course._id?.toString() ||
+//                 (typeof course === 'string' ? course : null);
+
+//             return targetCourseId === courseID;
+//         });
+
+//         if (!isCourseExists) {
+//             return next(new ErrorHandler("You have no access for this course!", 404));
+//         }
+
+//         const course = await CourseModel.findById(courseID);
+//         if (!course) {
+//             return next(new ErrorHandler("Course not found", 404));
+//         }
+
+//         const content = course.courseData;
+
+//         res.status(200).json({
+//             success: true,
+//             message: "Course Content",
+//             content
+//         });
+//     } catch (error: any) {
+//         return next(new ErrorHandler(error.message, 400));
+//     }
+// });
+
 // Get Course Content
 export const getCourseByUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userCourseList = req.user?.courses;
         const courseID = req.params.id;
+        const isAdmin = req.user?.role === "admin";
 
         const isCourseExists = userCourseList?.some((course: any) => {
             if (!course) return false;
@@ -165,7 +206,8 @@ export const getCourseByUser = CatchAsyncError(async (req: Request, res: Respons
             return targetCourseId === courseID;
         });
 
-        if (!isCourseExists) {
+        // Allow access if the course is purchased OR if the user is an admin
+        if (!isCourseExists && !isAdmin) {
             return next(new ErrorHandler("You have no access for this course!", 404));
         }
 
@@ -251,54 +293,134 @@ interface IAddAnswerData {
     questionID: string;
 };
 
+// export const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         const { answer, courseID, contentID, questionID }: IAddAnswerData = req.body;
+
+//         const course = await CourseModel.findById(courseID);
+
+//         if (!mongoose.Types.ObjectId.isValid(contentID)) {
+//             return next(new ErrorHandler("Invalid content ID", 400));
+//         }
+
+//         const courseContent = course?.courseData?.find((item: any) => item._id.equals(contentID));
+
+//         if (!courseContent) {
+//             return next(new ErrorHandler("Invalid content ID", 400));
+//         }
+
+//         const question = courseContent?.questions?.find((item: any) => item._id.equals(questionID));
+
+//         if (!question) {
+//             return next(new ErrorHandler("Invalid content ID", 400));
+//         }
+
+//         // Create a new answer
+//         const newAnswer: any = {
+//             user: req.user,
+//             answer
+//         }
+
+//         // Add this answer to course content
+//         question?.questionReplies.push(newAnswer);
+
+//         await course?.save();
+
+//         if (req.user?._id === question._id) {
+//             // Create a notification
+//             // Create new notification
+//             await NotificationModel.create({
+//                 userID: String(req.user._id),
+//                 title: "New Question Reply Received",
+//                 message: `You have a new question in course: ${courseContent.title}`,
+//             });
+//         } else {
+//             const data = {
+//                 name: question.user.name,
+//                 title: courseContent.title
+//             }
+
+//             const html = await ejs.renderFile(path.join(__dirname, "../mails/question-reply.ejs"), data);
+
+//             try {
+//                 await sendMail({
+//                     email: question.user.email,
+//                     subject: "Question Reply",
+//                     template: "question-reply.ejs",
+//                     data
+//                 });
+//             } catch (error: any) {
+//                 return next(new ErrorHandler(error.message, 400));
+//             }
+//         }
+
+
+//         res.status(200).json({
+//             success: true,
+//             message: "Answer added successfully!",
+//             course
+//         });
+//     } catch (error: any) {
+//         // return next(error);
+//         return next(new ErrorHandler(error.message, 400));
+//     }
+// });
+
+
+// Add question in course content
+
 export const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { answer, courseID, contentID, questionID }: IAddAnswerData = req.body;
 
-        const course = await CourseModel.findById(courseID);
-
+        // Validate all ObjectIds before querying
+        if (!mongoose.Types.ObjectId.isValid(courseID)) {
+            return next(new ErrorHandler("Invalid course ID", 400));
+        }
         if (!mongoose.Types.ObjectId.isValid(contentID)) {
             return next(new ErrorHandler("Invalid content ID", 400));
         }
+        if (!mongoose.Types.ObjectId.isValid(questionID)) {
+            return next(new ErrorHandler("Invalid question ID", 400));
+        }
+
+        const course = await CourseModel.findById(courseID);
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
 
         const courseContent = course?.courseData?.find((item: any) => item._id.equals(contentID));
-
         if (!courseContent) {
-            return next(new ErrorHandler("Invalid content ID", 400));
+            return next(new ErrorHandler("Course content not found", 404));
         }
 
         const question = courseContent?.questions?.find((item: any) => item._id.equals(questionID));
-
         if (!question) {
-            return next(new ErrorHandler("Invalid content ID", 400));
+            return next(new ErrorHandler("Question not found", 404));
         }
 
-        // Create a new answer
         const newAnswer: any = {
             user: req.user,
-            answer
-        }
+            answer,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
 
-        // Add this answer to course content
         question?.questionReplies.push(newAnswer);
+        await course.save();
 
-        await course?.save();
-
-        if (req.user?._id === question._id) {
-            // Create a notification
-            // Create new notification
+        // Notification logic
+        if (req.user?._id?.toString() === question.user._id?.toString()) {
             await NotificationModel.create({
                 userID: String(req.user._id),
                 title: "New Question Reply Received",
-                message: `You have a new question in course: ${courseContent.title}`,
+                message: `You have a new question reply in course: ${courseContent.title}`,
             });
         } else {
             const data = {
                 name: question.user.name,
                 title: courseContent.title
-            }
-
-            const html = await ejs.renderFile(path.join(__dirname, "../mails/question-reply.ejs"), data);
+            };
 
             try {
                 await sendMail({
@@ -312,20 +434,17 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
             }
         }
 
-
         res.status(200).json({
             success: true,
             message: "Answer added successfully!",
             course
         });
     } catch (error: any) {
-        // return next(error);
         return next(new ErrorHandler(error.message, 400));
     }
 });
 
 
-// Add question in course content
 interface IAddReviewData {
     review: string;
     courseID: string;
@@ -339,7 +458,11 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
         const courseID = req.params.id;
 
         // Check if courseID already exists
-        const courseExists = userCorseList?.some((course: any) => course._id.toString() === courseID?.toString());
+        // const courseExists = userCorseList?.some((course: any) => course._id.toString() === courseID?.toString());
+        const courseExists = userCorseList?.some(
+            (course: any) => (course.courseId || course._id)?.toString() === courseID?.toString()
+        );
+
 
         if (!courseExists) {
             return next(new ErrorHandler("You are not eligible for this course!!", 400));
@@ -358,24 +481,28 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
         course?.reviews.push(reviewData);
 
         // Review calculation
-        let avg = 0;
-        course?.reviews.forEach((rev: any) => {
-            avg += rev.rating;
-        });
-
-        if (course) {
-            // Calculating average
-            course.ratings = avg / course?.reviews.length;  // 2 reviews (5,4) ==> rating = 9 / 2
+        if (!course) {
+            return next(new ErrorHandler("Course not found!", 404));
         }
 
-        await course?.save();
+        // Review calculation
+        let totalRating = 0;
+        course.reviews.forEach((rev: any) => {
+            totalRating += rev.rating;
+        });
 
-        const notification: any = {
+        course.ratings = course.reviews.length > 0 ? totalRating / course.reviews.length : 0;
+
+        await course?.save();
+        // in addReview, right after await course?.save();
+        await redis.set(courseID, JSON.stringify(course), "EX", 604800); // refresh 7-day cache with updated reviews
+
+        // Create new notification
+        await NotificationModel.create({
+            userID: String(req?.user._id),
             title: "New review received",
             message: `${req.user?.name} has given a review on your course ${course?.name}`,
-        };
-
-        // Create a notification
+        });
 
         res.status(200).json({
             success: true,
@@ -417,7 +544,9 @@ export const addReplyToReview = CatchAsyncError(async (req: Request, res: Respon
 
         const replyData: any = {
             user: req.user,
-            comment
+            comment,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         };
 
         if (!review.commentReplies) {
@@ -427,6 +556,9 @@ export const addReplyToReview = CatchAsyncError(async (req: Request, res: Respon
         review.commentReplies?.push(replyData);
 
         await course?.save()
+
+        // in addReview, right after await course?.save();
+        await redis.set(courseID, JSON.stringify(course), "EX", 604800); // refresh 7-day cache with updated reviews
 
         res.status(200).json({
             success: true,

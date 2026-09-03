@@ -16,7 +16,7 @@ export interface IUser extends Document {
     }
     role: string;
     isVerified: boolean;
-    courses: Array<{ courseID: string }>;
+    courses: Array<{ courseId: string }>;
     comparePassword: (password: string) => Promise<boolean>;
     SignAccessToken: () => string;
     SignRefreshToken: () => string;

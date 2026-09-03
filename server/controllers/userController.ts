@@ -214,19 +214,19 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
         const refresh_token = req.cookies.refresh_token as string;
 
         if (!refresh_token) {
-            return next(new ErrorHandler("Please login to access this resource", 400));
+            return next(); // no session — let isAuthenticated decide
         }
 
         const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string) as JwtPayload;
 
-        if (!decoded || !decoded.id) {
-            return next(new ErrorHandler("Could not refresh token!", 400));
+        if (!decoded?.id) {
+            return next();
         }
 
         // Fetch session from Redis
         const session = await redis.get(decoded.id);
         if (!session) {
-            return next(new ErrorHandler("Session expired. Please login again!", 400));
+            return next();
         }
 
         const user = JSON.parse(session);
@@ -236,7 +236,7 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
             expiresIn: "5m",
         });
 
-        const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, {
+        const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, {
             expiresIn: "3d",
         });
 
@@ -245,34 +245,49 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
         const { accessTokenOptions, refreshTokenOptions } = getCookieOptions();
 
         res.cookie("access_token", accessToken, accessTokenOptions);
-        res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+        res.cookie("refresh_token", newRefreshToken, refreshTokenOptions);
 
         // Reset Redis session TTL in seconds
-        // const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
-        // const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
-        // await redis.set(user._id.toString(), JSON.stringify(user), "EX", redisTtlInSeconds);
-        await redis.set(user._id.toString(), JSON.stringify(user), "EX", 604800);  // 7 Days
+        await redis.set(
+            String(user._id),
+            JSON.stringify(user),
+            "EX",
+            7 * 24 * 60 * 60
+        );
 
         next();
-    } catch (error: any) {
-        return next(new ErrorHandler(error.message, 400));
+    } catch {
+        return next();
+        // return next(new ErrorHandler(error.message, 400));
     }
 });
 
 
 // Get user info
-export const getUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const userID = req.user?._id;
-        if (!userID) {
-            return next(new ErrorHandler("User not authenticated", 400));
-        }
+export const getUserInfo = CatchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userID = req.user?._id;
 
-        await getUserByID(userID.toString(), res, next);
-    } catch (error: any) {
-        return next(new ErrorHandler(error.message, 400));
+            if (!userID) {
+                return res.status(200).json({
+                    success: true,
+                    user: null,
+                });
+            }
+
+            await getUserByID(
+                String(userID),
+                res,
+                next
+            );
+        } catch (error: any) {
+            return next(
+                new ErrorHandler(error.message, 400)
+            );
+        }
     }
-});
+);
 
 
 interface ISocialAuthBody {

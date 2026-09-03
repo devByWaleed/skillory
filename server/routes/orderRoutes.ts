@@ -1,6 +1,6 @@
 import express, { Router } from "express";
 // Keep the .js extension for compatibility with your "type": "module" setup
-import { authorizeRole, userAuth } from "../middleware/userAuth.js";
+import { authorizeRole, isAuthenticated } from "../middleware/isAuthenticated.js";
 import { createOrder, createPaymentIntent, getAllOrders, sendStripePublishableKey, stripeWebhookController } from "../controllers/orderController.js";
 import { updateAccessToken } from "../controllers/userController.js";
 
@@ -8,10 +8,10 @@ import { updateAccessToken } from "../controllers/userController.js";
 const orderRouter: Router = express.Router();
 
 // Public routes
-orderRouter.post('/create-order', updateAccessToken, userAuth, createOrder);
-orderRouter.get('/get-orders', updateAccessToken, userAuth, authorizeRole("admin"), getAllOrders);
+orderRouter.post('/create-order', updateAccessToken, isAuthenticated, createOrder);
+orderRouter.get('/get-orders', updateAccessToken, isAuthenticated, authorizeRole("admin"), getAllOrders);
 orderRouter.get('/payment/stripe-publishable-key', sendStripePublishableKey);
-orderRouter.post("/payment/create-intent", updateAccessToken, userAuth, createPaymentIntent);
+orderRouter.post("/payment/create-intent", updateAccessToken, isAuthenticated, createPaymentIntent);
 orderRouter.post("/webhook", express.raw({ type: 'application/json' }), stripeWebhookController);
 
 

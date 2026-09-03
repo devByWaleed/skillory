@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 // Keep the .js extension for compatibility with your "type": "module" setup
 
-import { authorizeRole, userAuth } from "../middleware/userAuth.js";
+import { authorizeRole, isAuthenticated } from "../middleware/isAuthenticated.js";
 import { getCourseAnalytics, getOrderAnalytics, getUserAnalytics } from "../controllers/analyticsController.js";
 import { updateAccessToken } from "../controllers/userController.js";
 
@@ -9,9 +9,9 @@ import { updateAccessToken } from "../controllers/userController.js";
 const analyticsRouter: Router = express.Router();
 
 // Public routes
-analyticsRouter.get('/get-users-analytics', updateAccessToken, userAuth, authorizeRole("admin"), getUserAnalytics);
-analyticsRouter.get('/get-courses-analytics', updateAccessToken, userAuth, authorizeRole("admin"), getCourseAnalytics);
-analyticsRouter.get('/get-orders-analytics', updateAccessToken, userAuth, authorizeRole("admin"), getOrderAnalytics);
+analyticsRouter.get('/get-users-analytics', updateAccessToken, isAuthenticated, authorizeRole("admin"), getUserAnalytics);
+analyticsRouter.get('/get-courses-analytics', updateAccessToken, isAuthenticated, authorizeRole("admin"), getCourseAnalytics);
+analyticsRouter.get('/get-orders-analytics', updateAccessToken, isAuthenticated, authorizeRole("admin"), getOrderAnalytics);
 
 
 export default analyticsRouter;

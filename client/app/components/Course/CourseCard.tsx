@@ -12,7 +12,7 @@ type Props = {
 const CourseCard: FC<Props> = ({ item, isProfile }) => {
     return (
         <Link
-            href={isProfile ? `/course/${item._id}` : `/course-access/${item._id}`}
+            href={isProfile ? `/course-access/${item._id}` : `/course/${item._id}`}
             className="group block bg-white dark:bg-surface-800 border border-slate-200 dark:border-surface-700 rounded-2xl overflow-hidden hover:shadow-lg dark:hover:shadow-black/20 transition-shadow"
         >
             {/* Thumbnail */}
@@ -24,6 +24,7 @@ const CourseCard: FC<Props> = ({ item, isProfile }) => {
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="eager"
                     />
                 )}
                 {item.level && (

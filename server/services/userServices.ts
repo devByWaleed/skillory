@@ -39,6 +39,10 @@ export const getAllUsersService = async (res: Response) => {
 // Update User Role
 export const updateUserRoleService = async (res: Response, email: string, role: string) => {
     const user = await UserModel.findOneAndUpdate({ email }, { role }, { new: true });
+    const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
+    const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
+
+    await redis.set(String(user?._id), JSON.stringify(user), "EX", redisTtlInSeconds);
 
     if (!user) {
         return res.status(404).json({

@@ -1,6 +1,6 @@
 import express, { Router } from "express";
 // Keep the .js extension for compatibility with your "type": "module" setup
-import { authorizeRole, userAuth } from "../middleware/userAuth.js";
+import { authorizeRole, isAuthenticated } from "../middleware/isAuthenticated.js";
 import { createLayout, editLayout, getLayoutByType } from "../controllers/layoutController.js";
 import { updateAccessToken } from "../controllers/userController.js";
 
@@ -8,8 +8,8 @@ import { updateAccessToken } from "../controllers/userController.js";
 const layoutRouter: Router = express.Router();
 
 // Public routes
-layoutRouter.post('/create-layout', updateAccessToken, userAuth, authorizeRole("admin"), createLayout);
-layoutRouter.put('/edit-layout', updateAccessToken, userAuth, authorizeRole("admin"), editLayout);
+layoutRouter.post('/create-layout', updateAccessToken, isAuthenticated, authorizeRole("admin"), createLayout);
+layoutRouter.put('/edit-layout', updateAccessToken, isAuthenticated, authorizeRole("admin"), editLayout);
 layoutRouter.get('/get-layout-by-type/:type', getLayoutByType);
 
 

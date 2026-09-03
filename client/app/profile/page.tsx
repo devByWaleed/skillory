@@ -24,7 +24,7 @@ const page = (props: Props) => {
         <div>
             <Protected>
                 <Heading
-                    title={`${user.name} Profile | Skillory`}
+                    title={user?.name ? `${user.name} Profile | Skillory` : "Profile | Skillory"}
 
                     description="Skillory is an online learning platform offering expert-led courses in web development, programming, and tech skills. Learn at your own pace, track your progress, and turn skills into real-world results."
 

@@ -8,7 +8,12 @@ import redis from "../config/redis.js";
 
 
 // Authenticated User
-export const userAuth = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+export const isAuthenticated = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    // If updateAccessToken already authenticated this request (token was refreshed), trust it
+    if (req.user) {
+        return next();
+    }
+
     const access_token = req.cookies.access_token;
 
     if (!access_token) {

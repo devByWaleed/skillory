@@ -87,22 +87,39 @@ export const authApi = apiSlice.injectEndpoints({
             query: ({ email, password }) => ({
                 url: "user/login-user",
                 method: "POST",
-                body: { email, password },
-                credentials: "include" as const
+                body: {
+                    email,
+                    password,
+                },
+                credentials: "include" as const,
             }),
-            async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+
+            async onQueryStarted(
+                arg,
+                { queryFulfilled, dispatch }
+            ) {
                 try {
                     const result = await queryFulfilled;
+
                     dispatch(
                         userLogin({
                             accessToken: result.data.accessToken,
-                            user: result.data.user
+                            user: result.data.user,
                         })
                     );
-                } catch (error: any) {
-                    console.log(error);
+
+                    dispatch(
+                        apiSlice.endpoints.loadUser.initiate(
+                            undefined,
+                            {
+                                forceRefetch: true,
+                            }
+                        )
+                    );
+                } catch (error) {
+                    console.error("Login failed:", error);
                 }
-            }
+            },
         }),
 
         // Social auth

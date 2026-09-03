@@ -62,7 +62,7 @@ const ReviewSchema = new mongoose.Schema<IReview>({
     },
     comment: String,
     commentReplies: [Object]
-});
+}, { timestamps: true });
 
 const LinkSchema = new mongoose.Schema<ILink>({
     title: String,
@@ -73,7 +73,7 @@ const CommentSchema = new mongoose.Schema<IComment>({
     user: Object,
     question: String,
     questionReplies: [Object],
-});
+}, { timestamps: true });
 
 const CourseDataSchema = new mongoose.Schema<ICourseData>({
     videoURL: String,

@@ -42,20 +42,37 @@ export const getCookieOptions = () => {
     return { accessTokenOptions, refreshTokenOptions };
 };
 
-export const sendToken = async (user: IUser, statusCode: number, res: Response) => {
+export const sendToken = async (
+    user: IUser,
+    statusCode: number,
+    res: Response
+) => {
     const accessToken = user.SignAccessToken();
     const refreshToken = user.SignRefreshToken();
 
-    const userIdStr = String(user._id);
+    await redis.set(
+        String(user._id),
+        JSON.stringify(user),
+        "EX",
+        3 * 24 * 60 * 60
+    );
 
-    // Redis EX option requires TTL in SECONDS
-    const redisTtlInSeconds = refreshTokenExpire * 24 * 60 * 60;
-    await redis.set(userIdStr, JSON.stringify(user), "EX", redisTtlInSeconds);
+    const {
+        accessTokenOptions,
+        refreshTokenOptions,
+    } = getCookieOptions();
 
-    const { accessTokenOptions, refreshTokenOptions } = getCookieOptions();
+    res.cookie(
+        "access_token",
+        accessToken,
+        accessTokenOptions
+    );
 
-    res.cookie("access_token", accessToken, accessTokenOptions);
-    res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+    res.cookie(
+        "refresh_token",
+        refreshToken,
+        refreshTokenOptions
+    );
 
     res.status(statusCode).json({
         success: true,

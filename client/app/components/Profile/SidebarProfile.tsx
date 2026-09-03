@@ -35,12 +35,16 @@ const SidebarProfile: FC<Props> = ({ user, avatar, active, setActive, logoutHand
                         <Image
                             src={avatar || user?.avatar?.url}
                             alt={user?.name || "User avatar"}
+                            width={100}
+                            height={100}
                             className="w-full h-full object-cover"
                         />
                     ) : (
                         <Image
                             src={assets.default_avatar}
                             alt={user?.name || "User avatar"}
+                            width={100}
+                            height={100}
                             className="w-full h-full object-cover"
                         />
                     )}

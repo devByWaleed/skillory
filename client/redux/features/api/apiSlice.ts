@@ -22,17 +22,25 @@ export const apiSlice = createApi({
                 method: "GET",
                 credentials: "include" as const,
             }),
-            async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+            async onQueryStarted(
+                arg,
+                { queryFulfilled, dispatch }
+            ) {
                 try {
                     const result = await queryFulfilled;
+
+                    if (!result.data?.user) {
+                        return;
+                    }
+
                     dispatch(
                         userLogin({
-                            accessToken: result.data.activationToken,
-                            user: result.data.user
+                            accessToken: result.data.accessToken ?? "",
+                            user: result.data.user,
                         })
-                    )
-                } catch (error: any) {
-                    console.log(error);
+                    );
+                } catch {
+                    // A guest profile request is not an application error.
                 }
             }
         }),
