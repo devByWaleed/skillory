@@ -13,7 +13,11 @@ type Review = {
     message?: string;
     name?: string;
     role?: string;
-    user?: unknown;
+    user?: {
+        _id?: string;
+        name?: string;
+        avatar?: string | { url?: string };
+    };
 };
 
 type CoursesResponse = {
