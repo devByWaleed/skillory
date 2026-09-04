@@ -56,10 +56,6 @@ const DashboardWidgets: FC<Props> = () => {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-0.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
-                            <span>+120%</span>
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                        </div>
                     </div>
 
                     {/* Card 2: New Users */}
@@ -76,10 +72,6 @@ const DashboardWidgets: FC<Props> = () => {
                                     New Users
                                 </p>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-0.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
-                            <span>+150%</span>
-                            <ArrowUpRight className="w-3.5 h-3.5" />
                         </div>
                     </div>
                 </div>

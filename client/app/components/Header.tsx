@@ -148,6 +148,7 @@ const Header: FC<Props> = ({ open, setOpen, activeItem }) => {
                                 className="w-7.5 h-7.5 rounded-full cursor-pointer"
                                 width={30}
                                 height={30}
+                                sizes="30px"
                             />
                         </Link>
                     ) : (

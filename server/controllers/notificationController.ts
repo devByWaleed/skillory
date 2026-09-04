@@ -28,11 +28,9 @@ export const updateNotification = CatchAsyncError(async (req: Request, res: Resp
 
         if (!notification) {
             return next(new ErrorHandler("Notification Not Found!", 400));
-        } else {
-            notification.status ? (notification.status = "read")
-                : notification?.status
         }
 
+        notification.status = "read";
         await notification.save();
 
         const allNotifications = await NotificationModel.find().sort({ createdAt: -1 });
@@ -42,7 +40,6 @@ export const updateNotification = CatchAsyncError(async (req: Request, res: Resp
             allNotifications
         });
     } catch (error: any) {
-        // return next(error);
         return next(new ErrorHandler(error.message, 400));
     }
 });

@@ -13,7 +13,7 @@ interface ITokenOptions {
 }
 
 // Parse env variables (assume ACCESS_TOKEN_EXPIRE in minutes, REFRESH_TOKEN_EXPIRE in days)
-const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || "5", 10); // e.g., 5 minutes
+const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || "60", 10); // e.g., 5 minutes
 const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10); // e.g., 3 days
 
 // Generate cookie options dynamically per-request

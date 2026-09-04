@@ -2,17 +2,20 @@
 import React, { FC, useState } from 'react'
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useRouter } from 'next/navigation'
+import { useSelector } from 'react-redux'
 import { useCreateOrderMutation } from '@/redux/features/orders/orderApi'
 import toast from 'react-hot-toast'
 import { Loader2 } from "lucide-react"
 import { useLoadUserQuery } from '@/redux/features/api/apiSlice'
+import { socketId } from "@/app/utils/socketId";
 
 type Props = {
     courseId: string;
+    courseName: string;
     onSuccess: () => void;
 }
 
-const CheckoutForm: FC<Props> = ({ courseId, onSuccess }) => {
+const CheckoutForm: FC<Props> = ({ courseId, courseName, onSuccess }) => {
     const stripe = useStripe();
     const elements = useElements();
     const router = useRouter();
@@ -20,14 +23,14 @@ const CheckoutForm: FC<Props> = ({ courseId, onSuccess }) => {
     const { refetch: refetchUser } = useLoadUserQuery({});
     const [isProcessing, setIsProcessing] = useState(false);
 
+    const { user } = useSelector((state: any) => state.auth);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!stripe || !elements) return;
 
         setIsProcessing(true);
 
-        // redirect: "if_required" keeps the user in-app unless their bank
-        // forces an external redirect (e.g. 3D Secure) — matches "no navigation to Stripe" goal
         const { error, paymentIntent } = await stripe.confirmPayment({
             elements,
             redirect: "if_required",
@@ -50,6 +53,13 @@ const CheckoutForm: FC<Props> = ({ courseId, onSuccess }) => {
 
                 toast.success("Payment successful! You're enrolled.");
                 onSuccess();
+
+                socketId.emit("notification", {
+                    title: "New Order",
+                    message: `You have a new order for ${courseName}`,
+                    userId: user?._id,
+                });
+
                 router.push(`/course-access/${courseId}`);
             } catch (err: any) {
                 toast.error(err?.data?.message || "Order could not be recorded");

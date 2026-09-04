@@ -16,9 +16,21 @@ export const newOrder = CatchAsyncError(async (data: any, res: Response, next: N
 
 // Get All Users
 export const getAllOrdersService = async (res: Response) => {
-    const allOrders = await OrderModel.find().sort({ createdAt: -1 });
+    const allOrders = await OrderModel.find()
+        .populate("userID", "name email")
+        .populate("courseID", "name price title")
+        .sort({ createdAt: -1 });
+
     res.status(201).json({
         success: true,
         allOrders,
     });
-}
+};
+
+// export const getAllOrdersService = async (res: Response) => {
+//     const allOrders = await OrderModel.find().sort({ createdAt: -1 });
+//     res.status(201).json({
+//         success: true,
+//         allOrders,
+//     });
+// }

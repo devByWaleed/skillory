@@ -14,8 +14,7 @@ import { BiMessage } from 'react-icons/bi';
 import {
     useAddNewQuestionMutation,
     useAddAnswerInQuestionMutation,
-    useAddReviewInCourseMutation,
-    useAddReviewInReviewMutation
+    useAddReviewInCourseMutation
 } from '@/redux/features/course/courseApi';
 import toast from 'react-hot-toast';
 import { format } from 'timeago.js';
@@ -26,8 +25,8 @@ type Props = {
     activeVideo: number;
     setActiveVideo: (activeVideo: number) => void;
     refetch: () => void;
-    courseData?: any; // Contains overall course data including reviews
-    user?: any;       // Pass current user object
+    courseData?: any;
+    user?: any;
 };
 
 const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, refetch, courseData, user }) => {
@@ -41,11 +40,9 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
 
     const currentLecture = data?.[activeVideo];
 
-    // RTK Query Mutations
     const [addNewQuestion, { isSuccess: questionSuccess, error: questionError, isLoading: questionCreationLoading }] = useAddNewQuestionMutation();
     const [addAnswerInQuestion, { isSuccess: answerSuccess, error: answerError, isLoading: answerLoading }] = useAddAnswerInQuestionMutation();
     const [addReviewInCourse, { isSuccess: reviewSuccess, error: reviewError, isLoading: reviewLoading }] = useAddReviewInCourseMutation();
-    const [addReviewInReview, { isSuccess: replyReviewSuccess, error: replyReviewError, isLoading: replyReviewLoading }] = useAddReviewInReviewMutation();
 
     const handleQuestionSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,15 +82,6 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
         addReviewInCourse({ review, rating, courseID: id });
     };
 
-    const handleReviewReplySubmit = (reviewID: string, comment: string) => {
-        if (!comment.trim()) {
-            toast.error("Reply text cannot be empty!");
-            return;
-        }
-        addReviewInReview({ comment, courseID: id, reviewID });
-    };
-
-    // Effect for handling Toast Notifications & Resetting Inputs
     useEffect(() => {
         if (questionSuccess) {
             toast.success("Question added successfully!");
@@ -114,16 +102,10 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
             refetch();
         }
 
-        if (replyReviewSuccess) {
-            toast.success("Admin reply added successfully!");
-            refetch();
-        }
-
         const errors = [
             { err: questionError },
             { err: answerError },
             { err: reviewError },
-            { err: replyReviewError },
         ];
 
         errors.forEach(({ err }) => {
@@ -136,11 +118,9 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
         questionSuccess,
         answerSuccess,
         reviewSuccess,
-        replyReviewSuccess,
         questionError,
         answerError,
         reviewError,
-        replyReviewError,
         refetch
     ]);
 
@@ -148,14 +128,12 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
         <div className="w-full min-h-screen bg-slate-950 text-white p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                {/* Left Column: Player and Tabs */}
                 <div className="lg:col-span-2 space-y-6">
                     <CoursePlayer
                         title={currentLecture?.title}
                         videoUrl={currentLecture?.videoURL}
                     />
 
-                    {/* Navigation Buttons */}
                     <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                         <button
                             type="button"
@@ -178,13 +156,11 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
                         </button>
                     </div>
 
-                    {/* Section Header */}
                     <div>
                         <h1 className="text-xl sm:text-2xl font-bold">{currentLecture?.title}</h1>
                         <p className="text-xs text-slate-400 mt-1">{currentLecture?.videoSection}</p>
                     </div>
 
-                    {/* Tab Selection */}
                     <div className="flex items-center gap-6 border-b border-slate-800 text-sm font-medium">
                         {['Overview', 'Resources', 'Q&A', 'Reviews'].map((tab, idx) => (
                             <button
@@ -200,9 +176,7 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
                         ))}
                     </div>
 
-                    {/* Tab Content Panes */}
                     <div className="pt-2">
-                        {/* Tab 0: Overview */}
                         {activeTab === 0 && (
                             <div className="space-y-4 text-sm text-slate-300">
                                 <p>{currentLecture?.description || "No description provided for this lesson."}</p>
@@ -215,7 +189,6 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
                             </div>
                         )}
 
-                        {/* Tab 1: Resources */}
                         {activeTab === 1 && (
                             <div className="space-y-3">
                                 {currentLecture?.links?.length > 0 ? (
@@ -237,7 +210,6 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
                             </div>
                         )}
 
-                        {/* Tab 2: Q&A */}
                         {activeTab === 2 && (
                             <div className="space-y-6">
                                 <form onSubmit={handleQuestionSubmit} className="space-y-3">
@@ -270,64 +242,80 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
                             </div>
                         )}
 
-                        {/* Tab 3: Reviews & Ratings */}
                         {activeTab === 3 && (
                             <div className="space-y-6">
-                                {/* Create Review Form (For Students) */}
                                 {user?.role !== "admin" && (
-                                    <form onSubmit={handleReviewSubmit} className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
-                                        <h3 className="text-sm font-semibold text-slate-200">Leave a Review</h3>
+                                    (() => {
+                                        // Check if active user already left a review on this course
+                                        const userExistingReview = courseData?.reviews?.find(
+                                            (r: any) => String(r.user?._id || r.user) === String(user?._id)
+                                        );
 
-                                        <div className="flex items-center gap-1">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <button
-                                                    key={star}
-                                                    type="button"
-                                                    onClick={() => setRating(star)}
-                                                    onMouseEnter={() => setHoverRating(star)}
-                                                    onMouseLeave={() => setHoverRating(0)}
-                                                    className="p-1 focus:outline-none"
-                                                >
-                                                    <Star
-                                                        className={`w-6 h-6 ${(hoverRating || rating) >= star
-                                                            ? 'fill-amber-400 text-amber-400'
-                                                            : 'text-slate-600'
-                                                            }`}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
+                                        if (userExistingReview) {
+                                            return (
+                                                <div className="p-4 bg-slate-900/80 border border-cyan-800/40 rounded-xl space-y-2">
+                                                    <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">
+                                                        Your Submitted Review
+                                                    </span>
+                                                    <ReviewItem item={userExistingReview} />
+                                                </div>
+                                            );
+                                        }
 
-                                        <textarea
-                                            rows={3}
-                                            value={review}
-                                            onChange={(e) => setReview(e.target.value)}
-                                            placeholder="Write your detailed course feedback..."
-                                            className="w-full p-3 text-sm bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-cyan-500 text-slate-200"
-                                        />
+                                        return (
+                                            <form onSubmit={handleReviewSubmit} className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
+                                                <h3 className="text-sm font-semibold text-slate-200">Leave a Review</h3>
 
-                                        <div className="flex justify-end">
-                                            <button
-                                                type="submit"
-                                                disabled={reviewLoading}
-                                                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition"
-                                            >
-                                                {reviewLoading ? "Submitting..." : "Submit Review"}
-                                            </button>
-                                        </div>
-                                    </form>
+                                                <div className="flex items-center gap-1">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <button
+                                                            key={star}
+                                                            type="button"
+                                                            onClick={() => setRating(star)}
+                                                            onMouseEnter={() => setHoverRating(star)}
+                                                            onMouseLeave={() => setHoverRating(0)}
+                                                            className="p-1 focus:outline-none"
+                                                        >
+                                                            <Star
+                                                                className={`w-6 h-6 ${(hoverRating || rating) >= star
+                                                                    ? 'fill-amber-400 text-amber-400'
+                                                                    : 'text-slate-600'
+                                                                    }`}
+                                                            />
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                <textarea
+                                                    rows={3}
+                                                    value={review}
+                                                    onChange={(e) => setReview(e.target.value)}
+                                                    placeholder="Write your course review..."
+                                                    className="w-full p-3 text-sm bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-cyan-500 text-slate-200"
+                                                />
+
+                                                <div className="flex justify-end">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={reviewLoading}
+                                                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition"
+                                                    >
+                                                        {reviewLoading ? "Submitting..." : "Submit Review"}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        );
+                                    })()
                                 )}
 
-                                {/* List Course Reviews and Admin Reply Controls */}
+                                {/* Display List of All Course Reviews */}
                                 <div className="space-y-4">
-                                    {courseData?.reviews?.length > 0 ? (
+                                    <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">All Reviews</h4>
+                                    {courseData?.reviews && courseData.reviews.length > 0 ? (
                                         courseData.reviews.map((item: any, index: number) => (
                                             <ReviewItem
                                                 key={item._id || index}
                                                 item={item}
-                                                user={user}
-                                                handleReviewReplySubmit={handleReviewReplySubmit}
-                                                replyReviewLoading={replyReviewLoading}
                                             />
                                         ))
                                     ) : (
@@ -339,7 +327,6 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
                     </div>
                 </div>
 
-                {/* Right Column: Course Content Accordion */}
                 <div className="lg:col-span-1">
                     <div className="sticky top-24 bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
                         <h2 className="text-base font-bold text-slate-100">Course Content</h2>
@@ -356,7 +343,6 @@ const CourseContentMedia: FC<Props> = ({ data, id, activeVideo, setActiveVideo, 
     );
 };
 
-/* --- Component for Questions & Replies --- */
 const CommentReply = ({
     data,
     activeVideo,
@@ -493,26 +479,11 @@ const CommentItem = ({
     );
 };
 
-/* --- Component for Individual Course Reviews & Admin Replies --- */
-const ReviewItem = ({ item, user, handleReviewReplySubmit, replyReviewLoading }: any) => {
-    const [isReplying, setIsReplying] = useState(false);
-    const [reply, setReply] = useState("");
-
-    const onSubmitReply = () => {
-        if (!reply.trim()) {
-            toast.error("Reply text cannot be empty!");
-            return;
-        }
-        handleReviewReplySubmit(item._id, reply);
-        setReply("");
-        setIsReplying(false);
-    };
-
+const ReviewItem = ({ item }: any) => {
     const replies = item?.commentReplies || [];
 
     return (
         <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
-            {/* Header: User Info & Rating */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <img
@@ -537,10 +508,8 @@ const ReviewItem = ({ item, user, handleReviewReplySubmit, replyReviewLoading }:
                 </div>
             </div>
 
-            {/* Review Comment */}
-            <p className="text-xs text-slate-300 pl-11">{item?.review}</p>
+            <p className="text-xs text-slate-300 pl-11">{item?.review || item?.comment}</p>
 
-            {/* Existing Admin Replies */}
             {replies.length > 0 && (
                 <div className="pl-11 space-y-2 pt-2">
                     {replies.map((rep: any, idx: number) => (
@@ -561,48 +530,6 @@ const ReviewItem = ({ item, user, handleReviewReplySubmit, replyReviewLoading }:
                             <p className="text-xs text-slate-300 pl-7">{rep?.comment}</p>
                         </div>
                     ))}
-                </div>
-            )}
-
-            {/* Admin Reply Action & Form */}
-            {user?.role === "admin" && (
-                <div className="pl-11 pt-2">
-                    {!isReplying ? (
-                        <button
-                            type="button"
-                            onClick={() => setIsReplying(true)}
-                            className="flex items-center gap-1.5 text-xs text-cyan-400 hover:underline"
-                        >
-                            <BiMessage className="w-4 h-4" /> Add Reply
-                        </button>
-                    ) : (
-                        <div className="space-y-2 mt-2">
-                            <textarea
-                                rows={2}
-                                value={reply}
-                                onChange={(e) => setReply(e.target.value)}
-                                placeholder="Write official admin reply..."
-                                className="w-full p-2.5 text-xs bg-slate-950 border border-slate-800 rounded-lg focus:outline-none focus:border-cyan-500 text-slate-200"
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsReplying(false)}
-                                    className="px-3 py-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs rounded-md font-medium transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={replyReviewLoading}
-                                    onClick={onSubmitReply}
-                                    className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs rounded-md font-medium transition"
-                                >
-                                    Submit Reply
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
         </div>

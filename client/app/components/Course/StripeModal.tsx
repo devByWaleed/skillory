@@ -10,9 +10,10 @@ type Props = {
     stripePromise: any;
     clientSecret: string;
     courseId: string;
+    courseName: string;
 }
 
-const StripeModal: FC<Props> = ({ open, setOpen, stripePromise, clientSecret, courseId }) => {
+const StripeModal: FC<Props> = ({ open, setOpen, stripePromise, clientSecret, courseId, courseName }) => {
     if (!open || !clientSecret) return null;
 
     return (
@@ -42,7 +43,7 @@ const StripeModal: FC<Props> = ({ open, setOpen, stripePromise, clientSecret, co
                             appearance: { theme: "stripe" },
                         }}
                     >
-                        <CheckoutForm courseId={courseId} onSuccess={() => setOpen(false)} />
+                        <CheckoutForm courseId={courseId} courseName={courseName} onSuccess={() => setOpen(false)} />
                     </Elements>
                 </div>
             </div>

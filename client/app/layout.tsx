@@ -10,6 +10,7 @@ import { SessionProvider } from "next-auth/react";
 import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
 import Loader from "./components/Loader/Loader";
 import { useEffect, useState } from "react";
+import { socketId } from "./utils/socketId";
 
 
 const poppins = Poppins({
@@ -56,6 +57,12 @@ const Custom: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    socketId.on("connect", () => {
+      console.log("Connected to socket server");
+    });
   }, []);
 
   if (!mounted) {

@@ -12,7 +12,6 @@ import Loader from "../../Loader/Loader";
 import { format } from "timeago.js";
 import { useGetOrdersDataQuery } from "@/redux/features/orders/orderApi";
 
-
 type Props = {
     isDashboard?: boolean;
 };
@@ -21,74 +20,88 @@ const AllInvoices: FC<Props> = ({ isDashboard }) => {
     const { theme } = useTheme();
     const [search, setSearch] = useState("");
 
-    const { isLoading, data } = useGetOrdersDataQuery({});
-    const { data: usersData } = useGetAllUsersQuery({});
-    const { data: coursesData } = useGetAllCoursesQuery({});
+    const { isLoading: ordersLoading, data: ordersData } = useGetOrdersDataQuery({});
+    const { isLoading: usersLoading, data: usersData } = useGetAllUsersQuery({});
+    const { isLoading: coursesLoading, data: coursesData } = useGetAllCoursesQuery({});
 
     const [orderData, setOrderData] = useState<any[]>([]);
 
     useEffect(() => {
-        if (data && usersData && coursesData) {
-            const temp = data.allOrders.map((item: any) => {
-                const user = usersData?.allUsers?.find(
-                    (u: any) => u._id === item.userId
-                );
-                const course = coursesData?.allCourses?.find(
-                    (c: any) => c._id === item.courseId
-                );
+        if (ordersData && usersData && coursesData) {
+            // Safely extract array collections across potential response wrappers
+            const orders = ordersData.allOrders || ordersData.orders || [];
+            const users = usersData?.allUsers || usersData?.users || [];
+            const courses = coursesData?.allCourses || coursesData?.courses || [];
+
+            const temp = orders.map((item: any) => {
+                // Find matching user by checking multiple possible ID formats
+                const userReference = item.userID ?? item.userId ?? item.user;
+                const user = typeof userReference === "object"
+                    ? userReference
+                    : users.find((u: any) => String(u._id) === String(userReference));
+
+                // Find matching course by checking multiple possible ID formats
+                const courseReference = item.courseID ?? item.courseId ?? item.course;
+                const course = typeof courseReference === "object"
+                    ? courseReference
+                    : courses.find((c: any) => String(c._id) === String(courseReference));
+
+                // Fallback checks: try populated order properties if user/course hooks aren't loaded yet
+                const userName = user?.name || item.userName || item.user?.name || "N/A";
+                const userEmail = user?.email || item.userEmail || item.user?.email || "N/A";
+                const courseTitle = course?.name || course?.title || item.title || item.course?.name || "N/A";
+                const coursePrice = course?.price ?? item.payment_info?.amount ?? item.price ?? 0;
 
                 return {
                     id: item._id,
-                    userName: user?.name || "N/A",
-                    userEmail: user?.email || "N/A",
-                    title: course?.name || "N/A",
-                    price: "$ " + (course?.price || item.payment_info?.amount || 0),
-                    created_at: format(item.createdAt),
+                    userName,
+                    userEmail,
+                    title: courseTitle,
+                    price: "$ " + coursePrice,
+                    created_at: item.createdAt ? format(item.createdAt) : "N/A",
                 };
             });
+
             setOrderData(temp);
         }
-    }, [data, usersData, coursesData]);
+    }, [ordersData, usersData, coursesData]);
 
     const columns = [
-        ...(isDashboard ? [] : [{ field: "id", headerName: "ID", flex: 0.5, minWidth: 100 }]),
+        { field: "id", headerName: "ID", flex: 0.5, minWidth: 100 },
         { field: "userName", headerName: "Name", flex: 0.8, minWidth: 140 },
-        ...(isDashboard ? [] : [{ field: "userEmail", headerName: "Email", flex: 1, minWidth: 200 }]),
+        { field: "userEmail", headerName: "Email", flex: 1, minWidth: 200 },
         { field: "title", headerName: "Course Title", flex: 1, minWidth: 160 },
         { field: "price", headerName: "Price", flex: 0.5, minWidth: 90 },
-        ...(isDashboard
-            ? []
-            : [
-                { field: "created_at", headerName: "Created At", flex: 0.5, minWidth: 130 },
-                {
-                    field: "send_email",
-                    headerName: "Email",
-                    flex: 0.3,
-                    minWidth: 90,
-                    sortable: false,
-                    renderCell: (params: any) => (
-                        <a
-                            href={`mailto:${params.row.userEmail}`}
-                            target="_blank"
-                            aria-label="Email Customer"
-                            className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors inline-flex items-center justify-center"
-                        >
-                            <AiOutlineMail size={19} />
-                        </a>
-                    ),
-                },
-            ]),
+        { field: "created_at", headerName: "Created At", flex: 0.5, minWidth: 130 },
+        {
+            field: "send_email",
+            headerName: "Email",
+            flex: 0.3,
+            minWidth: 90,
+            sortable: false,
+            renderCell: (params: any) => (
+                <a
+                    href={`mailto:${params.row.userEmail}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Email Customer"
+                    className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors inline-flex items-center justify-center"
+                >
+                    <AiOutlineMail size={19} />
+                </a>
+            ),
+        },
     ];
 
     const filteredRows = orderData.filter(
         (row) =>
-            row.userName.toLowerCase().includes(search.toLowerCase()) ||
-            row.userEmail.toLowerCase().includes(search.toLowerCase()) ||
-            row.title.toLowerCase().includes(search.toLowerCase())
+            String(row.userName).toLowerCase().includes(search.toLowerCase()) ||
+            String(row.userEmail).toLowerCase().includes(search.toLowerCase()) ||
+            String(row.title).toLowerCase().includes(search.toLowerCase())
     );
 
     return (
-        <div className={"w-full"}>
+        <div className="w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
                 <h1 className="text-xl font-josefin font-bold text-brand-900 dark:text-white">
                     {isDashboard ? "Recent Invoices" : "All Invoices"}
@@ -108,7 +121,7 @@ const AllInvoices: FC<Props> = ({ isDashboard }) => {
                 )}
             </div>
 
-            {isLoading ? (
+            {ordersLoading || usersLoading || coursesLoading ? (
                 <Loader />
             ) : (
                 <Box
@@ -121,11 +134,7 @@ const AllInvoices: FC<Props> = ({ isDashboard }) => {
                             backgroundColor:
                                 theme === "dark" ? "#1e293b !important" : "#ffffff !important",
                         },
-                        "& .MuiDataGrid-columnHeaders": {
-                            backgroundColor:
-                                theme === "dark" ? "#334155 !important" : "#eef2ff !important",
-                        },
-                        "& .MuiDataGrid-columnHeader": {
+                        "& .MuiDataGrid-columnHeaders, & .MuiDataGrid-columnHeader": {
                             backgroundColor:
                                 theme === "dark" ? "#334155 !important" : "#eef2ff !important",
                         },
