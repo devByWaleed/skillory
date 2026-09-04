@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useGetHeroDataQuery } from '@/redux/features/layout/layoutApi';
 import { useGetUsersAllCoursesQuery } from '@/redux/features/course/courseApi';
@@ -10,9 +10,7 @@ import Footer from '../components/Footer';
 import Heading from '../utils/Heading';
 import { Search } from 'lucide-react';
 
-type Props = {};
-
-const page = (props: Props) => {
+function AllCoursesContent() {
     const searchParams = useSearchParams();
     const searchParamQuery = searchParams.get("title");
 
@@ -161,6 +159,12 @@ const page = (props: Props) => {
             <Footer />
         </div>
     );
-};
+}
 
-export default page;
+export default function Page() {
+    return (
+        <Suspense fallback={<Loader />}>
+            <AllCoursesContent />
+        </Suspense>
+    );
+}
