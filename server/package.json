@@ -36,12 +36,12 @@
     "stripe": "^22.6.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^7.0.2",
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.12",
+    "nodemailer": "^9.0.5"
   },
   "devDependencies": {
     "@types/ioredis": "^4.28.10",
     "@types/nodemailer": "^8.0.1",
-    "@types/socket.io": "^3.0.1",
-    "nodemailer": "^9.0.5"
+    "@types/socket.io": "^3.0.1"
   }
 }
