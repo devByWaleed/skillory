@@ -4,9 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "",
-    "watch": "tsx watch server.ts"
+    "watch": "tsx watch server.ts",
+    "build": "tsc",
+    "start": "tsx server.ts"
   },
   "type": "module",
   "author": "Waleed",
