@@ -10,7 +10,7 @@ type Props = {
     params: Promise<{ id: string }>;
 }
 
-const page: FC<Props> = ({ params }: any) => {
+const page: FC<Props> = ({ params }: Props) => {
     const { user } = useSelector((state: any) => state.auth);
     const { id } = use(params);
 

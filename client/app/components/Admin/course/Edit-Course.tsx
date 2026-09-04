@@ -45,6 +45,7 @@ const EditCourse: FC<Props> = ({ id }) => {
     const [courseInfo, setCourseInfo] = useState({
         name: "",
         description: "",
+        categories: "",
         price: "",
         estimatedPrice: "",
         tags: "",
