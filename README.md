@@ -14,6 +14,81 @@ As per its name, Skillory is a full-stack Learning Management System where stude
 
 The goal of this platform is to provide a complete online learning marketplace — students should be able to discover courses, pay for them securely, watch structured video content, and engage directly with instructors through questions and reviews. Admins should have full control over course creation, user roles, site content (hero, FAQ, categories), and real-time visibility into new orders, questions, and reviews as they happen.
 
+## System Architecture Overview
+
+### System Architecture Diagram
+
+```mermaid
+graph TD
+  %% Clients
+  subgraph Clients
+    S[Student]
+    A[Admin]
+  end
+
+  FE["Frontend (Next.js + Redux Toolkit / RTK Query)"]
+  BE["Backend API (Express.js)"]
+
+  subgraph BackendModules [Backend Modules]
+    Auth["Authentication & Authorization"]
+    Courses["Course Management & Curriculum"]
+    QnA["Q&A and Reviews"]
+    Orders["Order & Payment Processing"]
+    Layout["Site Layout Content (Hero, FAQ, Categories)"]
+    Notifications["Real-Time Notifications (Socket.io)"]
+    Analytics["Admin Analytics"]
+  end
+
+  DB["MongoDB + Mongoose"]
+  RedisExternal["Redis (Session & Cache)"]
+  StripeExternal["Stripe"]
+  CloudinaryExternal["Cloudinary"]
+  VdoCipherExternal["VdoCipher"]
+  EmailService["SMTP / Nodemailer"]
+  NextAuthExternal["NextAuth (Google / GitHub)"]
+  Vercel["Vercel Hosting (Frontend)"]
+  Render["Render Hosting (Backend)"]
+
+  %% Connections
+  S --> FE
+  A --> FE
+  FE --> BE
+  FE --> NextAuthExternal
+  FE -. "WebSocket" .-> Notifications
+
+  BE --> Auth & Courses & QnA & Orders & Layout & Notifications & Analytics
+  Auth --> DB
+  Auth --> RedisExternal
+  Courses --> DB
+  Courses --> CloudinaryExternal
+  Courses --> VdoCipherExternal
+  QnA --> DB
+  QnA --> EmailService
+  Orders --> DB
+  Orders --> StripeExternal
+  Orders --> RedisExternal
+  Layout --> DB
+  Layout --> CloudinaryExternal
+  Analytics --> DB
+  BE --> Render
+  FE --> Vercel
+
+  %% Styles with brighter text
+  classDef clients fill:#cce5ff,stroke:#333,stroke-width:1px,color:#003366,rx:8,ry:8;
+  classDef frontend fill:#d4edda,stroke:#333,stroke-width:1px,color:#064420,rx:8,ry:8;
+  classDef backend fill:#f8f9fa,stroke:#333,stroke-width:1px,color:#212529,rx:8,ry:8;
+  classDef db fill:#ffeeba,stroke:#333,stroke-width:1px,color:#7a4d00,rx:8,ry:8;
+  classDef external fill:#f9c2ff,stroke:#333,stroke-width:1px,color:#660066,rx:8,ry:8;
+  classDef deploy fill:#e2e3e5,stroke:#333,stroke-width:1px,color:#111,rx:8,ry:8;
+
+  class S,A clients;
+  class FE frontend;
+  class BE,Auth,Courses,QnA,Orders,Layout,Notifications,Analytics backend;
+  class DB db;
+  class RedisExternal,StripeExternal,CloudinaryExternal,VdoCipherExternal,EmailService,NextAuthExternal external;
+  class Vercel,Render deploy;
+```
+
 ---
 
 ## Key Features
@@ -129,10 +204,12 @@ This platform provides two main roles:
 - **Cloudinary**: Course thumbnails and layout images, with automatic cleanup of replaced images.
 - **VdoCipher**: Secure, DRM-protected video hosting and OTP-based playback for course lecture content.
 
-### Development Tools
+### Development & Deployment Tools
 
 - **Dotenv** for environment variable management across both frontend and backend.
 - Nodemon for backend auto-restart during development.
+- **Vercel** for hosting the Next.js frontend.
+- **Render** for hosting the Express + Socket.IO backend as a persistent web service.
 
 ## Challenges & Solutions
 
@@ -153,16 +230,337 @@ This platform provides two main roles:
 | Two responses being sent for a single request (`res.json()` called both inside and outside an un-awaited async helper) | Awaited the helper function that owned the response and removed the duplicate `res.json()` call outside it. |
 | MUI DataGrid's internal styling not responding to `sx` overrides for dark mode, due to newer versions moving theming into internal CSS variables/specificity layers | Layered `!important` overrides across every relevant DataGrid sub-selector (headers, cells, rows, pagination, icons) to guarantee the override regardless of the installed version's internal implementation. |
 | MUI DataGrid throwing a runtime error over missing unique row IDs | Mapped MongoDB's `_id` explicitly to DataGrid's expected `id` field when building row objects. |
-| Client-side `docType` mismatch in Stripe integration (publishable key casing, `client_secret` vs `clientSecret`) preventing Stripe.js from initializing | Standardized casing between backend response and frontend read on both fields. |
+| Client-side casing mismatch in Stripe integration (publishable key casing, `client_secret` vs `clientSecret`) preventing Stripe.js from initializing | Standardized casing between backend response and frontend read on both fields. |
 | Stripe webhook signature verification failing silently | Registered the webhook route with `express.raw()` before the app's global `express.json()` middleware, since signature verification requires the untouched raw request body. |
 | VdoCipher player showing an authentication error when a lecture's video field held an arbitrary URL instead of a real VdoCipher video ID | Clarified that the `videoURL` field must hold a VdoCipher-issued ID from an actual upload, and added guarded error states in the player for invalid/missing IDs. |
 | Socket.IO client hard-failing to connect with no fallback, due to `transports` being restricted to `websocket` only | Diagnosed via the browser's failed WebSocket request URL, which revealed a mismatched port between the socket server and the frontend's connection URI; corrected the environment variable to match the backend's actual listening port. |
 | Course reviews and replies not appearing on the public course page after being added, despite saving correctly to the database | Identified a 7-day Redis cache on the course document that was never being refreshed after review/reply writes, and added a cache-set call immediately after each successful save. |
 | A single mutation performing an add-and-clear action (e.g. clearing a reply textarea) regardless of whether the underlying request actually succeeded | Deferred the clear/reset action until the mutation's own success state confirmed, rather than firing it optimistically on click. |
 | An access-control guard on a protected content page checking only "did this user purchase the course," locking admins out of their own review-reply workflow | Added an explicit role check (`role === "admin"`) alongside the purchase check, so either condition grants access. |
-| Profile requests returning a 400 error when a visitor was not fully authenticated or the session needed refreshing | Made profile loading tolerant of guest and expired-session states, refreshed authentication when possible, and allowed the profile endpoint to return a controlled response instead of treating every profile visit as a failed authenticated request. |
-| Invoice tables showing empty or incomplete information even though orders existed in the database | Matched invoice records with the correct user and course references, handled both populated and unpopulated order data, waited for all supporting data to load, and kept the dashboard table's important invoice fields visible. |
-| Admins being unable to reply to course reviews because the reply form was tied to protected course content | Kept review replies protected on the server, moved the admin reply experience to the public course details review cards, added show/hide form state for admins, and refreshed course data after a reply so the new response appears immediately. |
+| A "production only" server-listen guard (written for a serverless host) silently preventing the server from ever listening on a port after moving to a persistent-process host | Removed the environment-gated guard entirely so `server.listen()` and the database connection always run, regardless of `NODE_ENV`. |
+
+## Database Design
+```mermaid
+erDiagram
+    users {
+        string _id PK
+        string name
+        string email
+        string password
+        string role
+        object avatar
+        array courses
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    courses {
+        string _id PK
+        string name
+        string description
+        string categories
+        number price
+        number estimatedPrice
+        object thumbnail
+        string tags
+        string level
+        string demoURL
+        array benefits
+        array prerequisites
+        number ratings
+        number purchased
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    courseData {
+        string _id PK
+        string courseId FK
+        string title
+        string description
+        string videoURL
+        string videoSection
+        number videoLength
+        string videoPlayer
+        array links
+        string suggestion
+        questions links
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    questions {
+        string _id PK
+        string contentId FK
+        object user
+        string question
+        array questionReplies
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    reviews {
+        string _id PK
+        string courseId FK
+        object user
+        number rating
+        string comment
+        array commentReplies
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    orders {
+        string _id PK
+        string courseID FK
+        string userID FK
+        object payment_info
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    notifications {
+        string _id PK
+        string userID FK
+        string title
+        string message
+        string status
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    layouts {
+        string _id PK
+        string type
+        object banner
+        array faq
+        array categories
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    users ||--o{ orders : "places"
+    users ||--o{ courses : "enrolled in"
+    courses ||--o{ orders : "ordered as"
+    courses ||--o{ courseData : "contains"
+    courses ||--o{ reviews : "has"
+    courseData ||--o{ questions : "has"
+    users ||--o{ notifications : "receives"
+```
+---
+
+## Application Flow Diagram
+```mermaid
+flowchart TB
+    %% Frontend Layer
+    subgraph FrontendLayer["Frontend Layer"]
+        subgraph UserInterface["User Interface"]
+
+            StudentUI["Student Interface<br/>• Course Discovery<br/>• Purchase & Checkout<br/>• Course Player<br/>• Q&A & Reviews<br/>• Profile Update"]
+
+            AdminUI["Admin Dashboard<br/>• Course Management<br/>• User Role Management<br/>• Layout Content Editing<br/>• Analytics & Invoices<br/>• Notifications"]
+        end
+
+        subgraph ReactComponents["React Components"]
+            CourseDetailsPage["CourseDetailsPage Component"]
+            CourseContentMedia["CourseContentMedia Component"]
+            DashboardHeader["DashboardHeader Component"]
+        end
+
+        subgraph StateManagement["State Management"]
+            ReduxStore["Redux Store (RTK Query)<br/>• Auth State<br/>• Course State<br/>• Order State<br/>• Layout State<br/>• Notification State<br/>• Analytics State"]
+        end
+    end
+
+    %% Communication Layer
+    subgraph CommunicationLayer["Communication Layer"]
+        HTTPREST["HTTP/REST"]
+        CORS["CORS Middleware<br/>Credentials: true"]
+        Auth["JWT Cookie Authentication"]
+        SocketIO["Socket.io WebSocket"]
+    end
+
+    %% Backend Layer
+    subgraph BackendLayer["Backend Layer"]
+        ExpressServer["Express.js Server<br/>API Gateway"]
+        subgraph RouteModules["Route Modules"]
+            UserRoutes["/api/v1/user/<br/>Authentication & Profiles"]
+            CourseRoutes["/api/v1/course/<br/>Course, Q&A, Reviews"]
+            OrderRoutes["/api/v1/order/<br/>Payments & Orders"]
+            LayoutRoutes["/api/v1/layout/<br/>Site Content"]
+            NotificationRoutes["/api/v1/notification/<br/>Notifications"]
+            AnalyticsRoutes["/api/v1/analytics/<br/>Dashboard Analytics"]
+        end
+    end
+
+    %% Data Layer
+    subgraph DataLayer["Data Layer"]
+        MongoDB["MongoDB Database<br/>Document Storage"]
+        Redis["Redis<br/>Sessions & Cache"]
+        Cloudinary["Cloudinary<br/>Image Storage"]
+        VdoCipher["VdoCipher<br/>Secure Video Streaming"]
+        Stripe["Stripe API<br/>Payment Processing"]
+    end
+
+    %% Connections: Frontend -> Communication
+    StudentUI --> CORS
+    AdminUI --> CORS
+
+    CourseDetailsPage --> ReduxStore
+    CourseContentMedia --> SocketIO
+    DashboardHeader --> SocketIO
+
+    %% Connections: Communication -> Backend
+    CORS --> Auth
+    Auth --> ExpressServer
+    SocketIO -.-> NotificationRoutes
+
+    %% Connections: Backend -> Routes
+    ExpressServer --> UserRoutes
+    ExpressServer --> CourseRoutes
+    ExpressServer --> OrderRoutes
+    ExpressServer --> LayoutRoutes
+    ExpressServer --> NotificationRoutes
+    ExpressServer --> AnalyticsRoutes
+
+    %% Connections: Backend -> Data
+    UserRoutes --> MongoDB
+    UserRoutes --> Redis
+    CourseRoutes --> MongoDB
+    CourseRoutes --> Cloudinary
+    CourseRoutes --> VdoCipher
+    OrderRoutes --> MongoDB
+    OrderRoutes --> Redis
+    OrderRoutes --> Stripe
+    LayoutRoutes --> MongoDB
+    LayoutRoutes --> Cloudinary
+    NotificationRoutes --> MongoDB
+    AnalyticsRoutes --> MongoDB
+
+    %% Real-time Flow
+    CourseContentMedia -.->|"Real-time Notifications"| DashboardHeader
+```
+
+---
+
+### Student Flow
+```mermaid
+sequenceDiagram
+    participant Student
+    participant Frontend
+    participant UserController
+    participant Database
+    participant EmailService
+
+    %% Register Account
+    Student->>Frontend: Register Account
+    Frontend->>UserController: POST /user/registration
+    UserController->>UserController: createActivationToken()
+    UserController->>EmailService: Send activation email
+
+    %% Activation
+    Student->>Frontend: Enter activation code
+    Frontend->>UserController: POST /user/activate-user
+    UserController->>Database: User.create()
+    UserController-->>Frontend: User created
+
+    %% Login
+    Student->>Frontend: Login
+    Frontend->>UserController: POST /user/login-user
+    UserController->>Database: User.findOne({email})
+    UserController->>UserController: bcrypt.compare()
+    UserController-->>Frontend: Login success + Cookies
+
+    %% Post-login Activities
+    Student->>Frontend: Browse & view course details
+    Student->>Frontend: Purchase course (Stripe Payment Element)
+    Student->>Frontend: Watch course & ask questions
+    Student->>Frontend: Leave a review
+```
+
+---
+
+### Admin Flow
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Frontend
+    participant CourseController
+    participant UserController
+    participant Database
+
+    %% Admin Login
+    Admin->>Frontend: Login as Admin
+    Frontend->>UserController: POST /user/login-user
+    UserController->>Database: User.findOne({email})
+    UserController-->>Frontend: Login success (role: admin)
+
+    %% Course Creation
+    Admin->>Frontend: Fill multi-step course builder
+    Frontend->>CourseController: POST /course/create-course
+    CourseController->>Database: CourseModel.create()
+    CourseController-->>Frontend: Course created
+
+    %% Manage Users
+    Admin->>Frontend: Update a user's role
+    Frontend->>UserController: PUT /user/update-user-role
+    UserController->>Database: UserModel.findOneAndUpdate({email})
+    UserController-->>Frontend: Role updated
+
+    %% Reply to Review
+    Admin->>Frontend: Reply to a course review
+    Frontend->>CourseController: POST /course/add-reply
+    CourseController->>Database: course.reviews.commentReplies.push()
+    CourseController-->>Frontend: Reply added
+
+    %% View Analytics
+    Admin->>Frontend: View dashboard analytics
+    Frontend->>CourseController: GET /analytics/courses
+    CourseController->>Database: generateLast12MonthsData()
+    CourseController-->>Frontend: Chart data
+```
+
+---
+
+### Payment & Notification Flow
+```mermaid
+sequenceDiagram
+    participant Student
+    participant Frontend
+    participant OrderController
+    participant Stripe
+    participant Database
+    participant SocketServer
+    participant Admin
+
+    %% Create Payment Intent
+    Student->>Frontend: Click "Buy now"
+    Frontend->>OrderController: POST /order/payment/create-intent
+    OrderController->>Database: Fetch course price
+    OrderController->>Stripe: paymentIntents.create()
+    Stripe-->>OrderController: clientSecret
+    OrderController-->>Frontend: clientSecret
+
+    %% Confirm Payment
+    Student->>Frontend: Submit Payment Element
+    Frontend->>Stripe: stripe.confirmPayment()
+    Stripe-->>Frontend: paymentIntent.status = "succeeded"
+
+    %% Fulfill Order
+    Frontend->>OrderController: POST /order/create-order
+    OrderController->>Stripe: paymentIntents.retrieve()
+    OrderController->>Database: Add course to user, increment purchased
+    OrderController->>Database: Refresh Redis session cache
+    OrderController-->>Frontend: Order confirmed
+
+    %% Real-time Notification
+    Frontend->>SocketServer: socket.emit("notification")
+    SocketServer->>SocketServer: io.emit("newNotification")
+    SocketServer-->>Admin: Live notification + sound
+    Admin->>Frontend: Marks notification as read
+    Frontend->>OrderController: PUT /notification/update-notification/:id
+```
+---
 
 ## Best Practices
 
