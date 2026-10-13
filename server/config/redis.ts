@@ -4,8 +4,11 @@ import dns from "dns/promises";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
 let redisInstance: Redis | null = null;
 let isOffline = false;
+let offlineUntil = 0; // retry after cooldown instead of staying offline forever
 
 // Helper to check for active internet connection
 const checkInternet = async (): Promise<boolean> => {
@@ -23,19 +26,13 @@ const getRedisClient = (): Redis => {
 
     redisInstance = new Redis(REDIS_URL, {
         lazyConnect: true, // Prevents automatic connection on instantiation
-        retryStrategy: (times) => {
-            if (times > 3) {
-                console.error(`❌ Redis: Failed to connect after ${times} attempts. Disabling Redis for this session.`);
-                isOffline = true;
-                return null; // Stop reconnecting
-            }
-            return Math.min(times * 200, 2000);
-        },
+        retryStrategy: (times) => Math.min(times * 200, 2000), // never give up
         connectTimeout: 5000,
         maxRetriesPerRequest: 1, // Fails fast when offline so server routes don't hang
     });
 
     redisInstance.on("connect", () => console.log("✅ Redis Connected Successfully"));
+    redisInstance.on("ready", () => { isOffline = false; });
     redisInstance.on("error", (error) => {
         if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
             console.warn("⚠️ Redis unavailable (Offline or unreachable). Operations will safe-bypass.");
@@ -63,15 +60,10 @@ const createOfflineSafeRedis = () => {
                 };
             }
 
-            // Intercept data methods (get, set, del, etc.)
             return async (...args: any[]) => {
-                if (isOffline) return null;
-
-                const hasInternet = await checkInternet();
-                if (!hasInternet) {
-                    isOffline = true;
-                    console.warn(`⚠️ No internet detected. Skipping Redis command: ${prop}`);
-                    return null;
+                if (isOffline && Date.now() < offlineUntil) {
+                    if (IS_PROD) throw new Error("Redis is unavailable");
+                    return null; // dev only: safe bypass
                 }
 
                 const client = getRedisClient();
@@ -84,8 +76,10 @@ const createOfflineSafeRedis = () => {
                         return await method.apply(client, args);
                     }
                 } catch (err: any) {
-                    console.warn(`⚠️ Redis operation '${prop}' failed: ${err.message}`);
+                    console.error(`❌ Redis operation '${prop}' failed: ${err.message}`);
                     isOffline = true;
+                    offlineUntil = Date.now() + 30_000;
+                    if (IS_PROD) throw err; // surface it instead of fake-succeeding
                     return null;
                 }
             };

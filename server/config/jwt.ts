@@ -13,8 +13,8 @@ interface ITokenOptions {
 }
 
 // Parse env variables (assume ACCESS_TOKEN_EXPIRE in minutes, REFRESH_TOKEN_EXPIRE in days)
-const accessTokenExpire = parseInt(process.env.ACCESS_TOKEN_EXPIRE || "60", 10); // e.g., 5 minutes
-const refreshTokenExpire = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10); // e.g., 3 days
+import { accessTokenExpire, refreshTokenExpire } from "../config/tokenConfig.js";
+export { accessTokenExpire, refreshTokenExpire }; // keeps updateAccessToken's import working
 
 // Generate cookie options dynamically per-request
 export const getCookieOptions = () => {
@@ -54,7 +54,7 @@ export const sendToken = async (
         String(user._id),
         JSON.stringify(user),
         "EX",
-        3 * 24 * 60 * 60
+        refreshTokenExpire * 24 * 60 * 60
     );
 
     const {

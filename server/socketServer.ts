@@ -2,7 +2,12 @@ import { Server as SocketIOServer } from "socket.io";
 import type { Server as HTTPServer } from "http";
 
 export const initSocketServer = (server: HTTPServer) => {
-    const io = new SocketIOServer(server);
+    const io = new SocketIOServer(server, {
+        cors: {
+            origin: ["http://localhost:3000", "https://skillory-topaz.vercel.app"],
+            credentials: true,
+        },
+    });
 
     io.on("connection", (socket) => {
         console.log("A user connected");

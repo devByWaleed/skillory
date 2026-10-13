@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import ProfileInfo from './ProfileInfo';
 import ChangePassword from './ChangePassword';
+import EnrolledCourses from './EnrolledCourses';
 
 type Props = {
     user: any;
@@ -61,14 +62,7 @@ const Profile: FC<Props> = ({ user }) => {
                         <ChangePassword />
                     )}
                     {active === 3 && (
-                        <div>
-                            <h2 className="text-xl font-josefin font-bold text-brand-900 dark:text-white">
-                                Enrolled courses
-                            </h2>
-                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                Courses you've purchased will appear here.
-                            </p>
-                        </div>
+                        <EnrolledCourses user={user} />
                     )}
                 </div>
             </div>

@@ -15,6 +15,8 @@ import { stripeWebhookController } from "./controllers/orderController.js";
 
 export const app = express();
 
+app.set("trust proxy", 1);
+
 app.post(
     "/api/v1/order/webhook",
     express.raw({ type: "application/json" }),

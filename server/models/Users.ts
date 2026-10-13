@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 // Dotenv configuration
 import "dotenv/config"
 import jwt from "jsonwebtoken";
+import { accessTokenExpire, refreshTokenExpire } from "../config/tokenConfig.js";
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -63,7 +64,17 @@ const UserSchema: Schema<IUser> = new mongoose.Schema({
             }
         }
     ],
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    toJSON: {
+        // Never leak the password hash, even if a query used .select("+password").
+        // Applies to res.json(user) and JSON.stringify(user) (used for the Redis session).
+        transform(_doc, ret: any) {
+            delete ret.password;
+            return ret;
+        }
+    }
+});
 
 // Hash Password
 UserSchema.pre("save", async function (this: IUser) {
@@ -73,17 +84,17 @@ UserSchema.pre("save", async function (this: IUser) {
     this.password = await bcrypt.hash(this.password, 10);
 });
 
-// Sign Access Token: Login
+// Sign Access Token: Login (lifetime comes from ACCESS_TOKEN_EXPIRE, in minutes)
 UserSchema.methods.SignAccessToken = function () {
     return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN || "", {
-        expiresIn: "5m"
+        expiresIn: accessTokenExpire * 60              // seconds
     })
 }
 
-// Sign Refresh Token: Login
+// Sign Refresh Token: Login (lifetime comes from REFRESH_TOKEN_EXPIRE, in days)
 UserSchema.methods.SignRefreshToken = function () {
     return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN || "", {
-        expiresIn: "7d"
+        expiresIn: refreshTokenExpire * 24 * 60 * 60   // seconds
     })
 }
 

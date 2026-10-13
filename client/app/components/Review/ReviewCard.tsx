@@ -76,6 +76,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
                                 src={avatarUrl}
                                 alt={reviewerName}
                                 fill
+                                sizes="32px"
                                 className="object-cover"
                             />
                         </div>

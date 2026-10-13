@@ -6,7 +6,7 @@ import jwt, { type Secret, type JwtPayload } from "jsonwebtoken";
 // Dotenv configuration
 import "dotenv/config"
 import sendMail from "../config/nodeMailer.js";
-import { getCookieOptions, sendToken } from "../config/jwt.js";
+import { getCookieOptions, sendToken, accessTokenExpire, refreshTokenExpire } from "../config/jwt.js";
 import path from 'path';
 import ejs from 'ejs';
 import { fileURLToPath } from 'url';
@@ -233,11 +233,11 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
 
         // Generate new tokens
         const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, {
-            expiresIn: "5m",
+            expiresIn: accessTokenExpire * 60,               // seconds
         });
 
         const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, {
-            expiresIn: "3d",
+            expiresIn: refreshTokenExpire * 24 * 60 * 60,    // seconds
         });
 
         req.user = user;
@@ -252,13 +252,13 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
             String(user._id),
             JSON.stringify(user),
             "EX",
-            7 * 24 * 60 * 60
+            refreshTokenExpire * 24 * 60 * 60
         );
 
         next();
-    } catch {
+    } catch (err: any) {
+        console.warn("updateAccessToken failed:", err.message); // visible in Render logs
         return next();
-        // return next(new ErrorHandler(error.message, 400));
     }
 });
 
