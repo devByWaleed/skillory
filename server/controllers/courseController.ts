@@ -7,7 +7,6 @@ import CourseModel from "../models/Courses.js";
 import redis from "../config/redis.js";
 import mongoose from "mongoose";
 import path from "path";
-import ejs from 'ejs';
 import { fileURLToPath } from 'url';
 import sendMail from "../config/nodeMailer.js";
 import NotificationModel from "../models/Notifications.js";
@@ -265,7 +264,7 @@ export const addQuestion = CatchAsyncError(async (req: Request, res: Response, n
 
         // Create new notification
         await NotificationModel.create({
-            userID: String(req?.user._id),
+            userID: String(req.user?._id),
             title: "New Question Received",
             message: `You have a new question in course: ${courseContent.title}`,
         });
@@ -292,79 +291,6 @@ interface IAddAnswerData {
     contentID: string;
     questionID: string;
 };
-
-// export const addAnswer = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-//     try {
-//         const { answer, courseID, contentID, questionID }: IAddAnswerData = req.body;
-
-//         const course = await CourseModel.findById(courseID);
-
-//         if (!mongoose.Types.ObjectId.isValid(contentID)) {
-//             return next(new ErrorHandler("Invalid content ID", 400));
-//         }
-
-//         const courseContent = course?.courseData?.find((item: any) => item._id.equals(contentID));
-
-//         if (!courseContent) {
-//             return next(new ErrorHandler("Invalid content ID", 400));
-//         }
-
-//         const question = courseContent?.questions?.find((item: any) => item._id.equals(questionID));
-
-//         if (!question) {
-//             return next(new ErrorHandler("Invalid content ID", 400));
-//         }
-
-//         // Create a new answer
-//         const newAnswer: any = {
-//             user: req.user,
-//             answer
-//         }
-
-//         // Add this answer to course content
-//         question?.questionReplies.push(newAnswer);
-
-//         await course?.save();
-
-//         if (req.user?._id === question._id) {
-//             // Create a notification
-//             // Create new notification
-//             await NotificationModel.create({
-//                 userID: String(req.user._id),
-//                 title: "New Question Reply Received",
-//                 message: `You have a new question in course: ${courseContent.title}`,
-//             });
-//         } else {
-//             const data = {
-//                 name: question.user.name,
-//                 title: courseContent.title
-//             }
-
-//             const html = await ejs.renderFile(path.join(__dirname, "../mails/question-reply.ejs"), data);
-
-//             try {
-//                 await sendMail({
-//                     email: question.user.email,
-//                     subject: "Question Reply",
-//                     template: "question-reply.ejs",
-//                     data
-//                 });
-//             } catch (error: any) {
-//                 return next(new ErrorHandler(error.message, 400));
-//             }
-//         }
-
-
-//         res.status(200).json({
-//             success: true,
-//             message: "Answer added successfully!",
-//             course
-//         });
-//     } catch (error: any) {
-//         // return next(error);
-//         return next(new ErrorHandler(error.message, 400));
-//     }
-// });
 
 
 // Add question in course content
@@ -406,7 +332,8 @@ export const addAnswer = CatchAsyncError(async (req: Request, res: Response, nex
             updatedAt: new Date().toISOString(),
         };
 
-        question?.questionReplies.push(newAnswer);
+        question.questionReplies = question.questionReplies ?? [];
+        question.questionReplies.push(newAnswer);
         await course.save();
 
         // Notification logic
@@ -455,7 +382,7 @@ interface IAddReviewData {
 export const addReview = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userCorseList = req?.user?.courses;
-        const courseID = req.params.id;
+        const courseID = String(req.params.id);
 
         // Check if courseID already exists
         // const courseExists = userCorseList?.some((course: any) => course._id.toString() === courseID?.toString());
@@ -499,7 +426,7 @@ export const addReview = CatchAsyncError(async (req: Request, res: Response, nex
 
         // Create new notification
         await NotificationModel.create({
-            userID: String(req?.user._id),
+            userID: String(req.user?._id),
             title: "New review received",
             message: `${req.user?.name} has given a review on your course ${course?.name}`,
         });
@@ -601,13 +528,7 @@ export const deleteCourse = CatchAsyncError(async (req: Request, res: Response, 
 
         await course.deleteOne({ id });
 
-        // await redis.del(id);
-        // Delete session in Redis with TTL in seconds
-        const userIdStr = String(course?._id);
-        const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
-        const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
-
-        await redis.del(userIdStr, id, "EX", redisTtlInSeconds);
+        await redis.del(String(course?._id));
 
         res.status(200).json({
             success: true,

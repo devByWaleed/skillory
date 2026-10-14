@@ -533,11 +533,7 @@ export const deleteUser = CatchAsyncError(async (req: Request, res: Response, ne
 
         // await redis.del(id);
         // Delete session in Redis with TTL in seconds
-        const userIdStr = String(user?._id);
-        const refreshTokenExpireDays = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "3", 10);
-        const redisTtlInSeconds = refreshTokenExpireDays * 24 * 60 * 60;
-
-        await redis.del(userIdStr, id, "EX", redisTtlInSeconds);
+        await redis.del(String(user?._id));
 
         res.status(200).json({
             success: true,

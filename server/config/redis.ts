@@ -6,14 +6,29 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 const IS_PROD = process.env.NODE_ENV === "production";
 
+// How long we skip redis after a failure, so requests don't keep waiting on a dead connection
+const OFFLINE_COOLDOWN_MS = 30 * 1000;
+
+// How often we allow the same "redis is down" warning to print, so the console stays readable
+const WARN_EVERY_MS = 15 * 1000;
+
 let redisInstance: Redis | null = null;
 let isOffline = false;
-let offlineUntil = 0; // retry after cooldown instead of staying offline forever
+let offlineUntil = 0;
+let lastWarnAt = 0;
 
-// Helper to check for active internet connection
+// Remember that redis is down and pause calls to it for a while
+const markOffline = () => {
+    isOffline = true;
+    offlineUntil = Date.now() + OFFLINE_COOLDOWN_MS;
+};
+
+// True while we are inside the cooldown window after a failure
+const shouldSkipRedis = () => isOffline && Date.now() < offlineUntil;
+
+// Quick check for outbound internet access
 const checkInternet = async (): Promise<boolean> => {
     try {
-        // Quick DNS lookup to check outbound internet access
         await dns.lookup("google.com");
         return true;
     } catch {
@@ -25,35 +40,51 @@ const getRedisClient = (): Redis => {
     if (redisInstance) return redisInstance;
 
     redisInstance = new Redis(REDIS_URL, {
-        lazyConnect: true, // Prevents automatic connection on instantiation
-        retryStrategy: (times) => Math.min(times * 200, 2000), // never give up
+        lazyConnect: true, // do not connect until the first command needs it
+        retryStrategy: (times) => Math.min(times * 200, 2000), // keep retrying in the background
         connectTimeout: 5000,
-        maxRetriesPerRequest: 1, // Fails fast when offline so server routes don't hang
+        maxRetriesPerRequest: 1, // fail fast when offline so routes never hang
     });
 
     redisInstance.on("connect", () => console.log("✅ Redis Connected Successfully"));
-    redisInstance.on("ready", () => { isOffline = false; });
-    redisInstance.on("error", (error) => {
-        if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
-            console.warn("⚠️ Redis unavailable (Offline or unreachable). Operations will safe-bypass.");
-            isOffline = true;
+
+    redisInstance.on("ready", () => {
+        isOffline = false;
+        offlineUntil = 0;
+    });
+
+    // Without this listener a connection error could take the whole process down
+    redisInstance.on("error", (error: Error) => {
+        const code = (error as Error & { code?: string }).code;
+
+        if (code === "ENOTFOUND" || code === "ECONNREFUSED" || code === "ETIMEDOUT") {
+            markOffline();
+
+            // Print the warning now and then, not on every retry
+            if (Date.now() - lastWarnAt > WARN_EVERY_MS) {
+                lastWarnAt = Date.now();
+                console.warn("⚠️ Redis unavailable (offline or unreachable). Operations will safe-bypass.");
+            }
         }
     });
 
     return redisInstance;
 };
 
-// Safe wrapper for Redis operations when offline
+// Wrapper that lets the app keep running when redis cannot be reached
 const createOfflineSafeRedis = () => {
     const dummyTarget = {} as Redis;
 
     return new Proxy(dummyTarget, {
-        get(_, prop: string) {
-            // Intercept calls to testRedis or internal checks
+        get(_, prop: string | symbol) {
+            // Ignore symbols and "then" so awaiting the proxy itself never hangs
+            if (typeof prop !== "string" || prop === "then") return undefined;
+
             if (prop === "ping") {
                 return async () => {
                     const hasInternet = await checkInternet();
-                    if (!hasInternet || isOffline) return "OFFLINE_SKIPPED";
+                    if (!hasInternet || shouldSkipRedis()) return "OFFLINE_SKIPPED";
+
                     const client = getRedisClient();
                     if (client.status === "wait") await client.connect().catch(() => { });
                     return client.ping();
@@ -61,9 +92,10 @@ const createOfflineSafeRedis = () => {
             }
 
             return async (...args: any[]) => {
-                if (isOffline && Date.now() < offlineUntil) {
+                // Inside the cooldown: skip redis completely
+                if (shouldSkipRedis()) {
                     if (IS_PROD) throw new Error("Redis is unavailable");
-                    return null; // dev only: safe bypass
+                    return null; // local dev only: act like a cache miss
                 }
 
                 const client = getRedisClient();
@@ -71,16 +103,17 @@ const createOfflineSafeRedis = () => {
                     if (client.status === "wait") {
                         await client.connect();
                     }
+
                     const method = (client as any)[prop];
                     if (typeof method === "function") {
                         return await method.apply(client, args);
                     }
                 } catch (err: any) {
                     console.error(`❌ Redis operation '${prop}' failed: ${err.message}`);
-                    isOffline = true;
-                    offlineUntil = Date.now() + 30_000;
-                    if (IS_PROD) throw err; // surface it instead of fake-succeeding
-                    return null;
+                    markOffline();
+
+                    if (IS_PROD) throw err; // in production, show the real failure
+                    return null; // locally, keep the server and routes alive
                 }
             };
         },
@@ -96,6 +129,7 @@ export const testRedis = async () => {
             console.warn("⚠️ No internet connection detected. Skipping Redis ping.");
             return false;
         }
+
         const pong = await redisProxy.ping();
         console.log("✅ Redis Ping:", pong);
         return pong === "PONG";
@@ -107,97 +141,3 @@ export const testRedis = async () => {
 
 export { redisProxy as redis };
 export default redisProxy;
-
-
-
-
-
-
-
-
-
-// REDIS Configuration
-/*
-import { Redis } from "ioredis";
-import "dotenv/config";
-
-// Get Redis URL from environment
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
-
-// Create Redis client
-const redis = new Redis(REDIS_URL, {
-    // Retry strategy
-    retryStrategy: (times) => {
-        if (times > 5) {
-            console.error(`❌ Redis: Failed to connect after ${times} attempts`);
-            return null; // Stop retrying
-        }
-        const delay = Math.min(times * 100, 3000);
-        console.log(`🔄 Redis: Retry ${times} in ${delay}ms`);
-        return delay;
-    },
-    // Connection timeout
-    connectTimeout: 10000,
-    // Keep alive
-    keepAlive: 30000,
-});
-
-// Connection events
-redis.on("connect", () => {
-    console.log("✅ Redis Connected Successfully");
-});
-
-redis.on("ready", () => {
-    console.log("✅ Redis Ready");
-});
-
-redis.on("error", (error) => {
-    if (error.code === "ECONNREFUSED") {
-        console.error("❌ Redis: Connection refused. Is Redis running?");
-    } else {
-        console.error("❌ Redis Error:", error.message);
-    }
-});
-
-redis.on("close", () => {
-    console.log("⚠️ Redis: Connection closed");
-});
-
-redis.on("reconnecting", () => {
-    console.log("🔄 Redis: Reconnecting...");
-});
-
-// Test function
-export const testRedis = async () => {
-    try {
-        const pong = await redis.ping();
-        console.log("✅ Redis Ping:", pong);
-        return true;
-    } catch (error) {
-        console.error("❌ Redis Ping failed:", error);
-        return false;
-    }
-};
-
-// Export
-export { redis };
-export default redis;
-*/
-
-
-/*
-import { Redis } from "ioredis";
-// Dotenv configuration
-import "dotenv/config";
-
-
-const redisClient = () => {
-    if (process.env.REDIS_URL) {
-        console.log("Redis Connected");
-    } else {
-        throw new Error("Redis Connection Failed!");
-    }
-}
-
-export const redis = new Redis(redisClient());
-*/

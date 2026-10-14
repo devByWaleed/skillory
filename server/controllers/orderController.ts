@@ -75,7 +75,7 @@ export const createOrder = CatchAsyncError(async (req: Request, res: Response, n
             order: {
                 _id: String(course._id).slice(0, 6),
                 name: course.name,
-                price: course.price,
+                price: course.price ?? 0,
                 date: new Date().toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
@@ -167,7 +167,7 @@ export const createPaymentIntent = CatchAsyncError(async (req: Request, res: Res
         }
 
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(course.price * 100),
+            amount: Math.round((course.price ?? 0) * 100),
             currency: "usd",
             metadata: {
                 courseId: String(course._id),
@@ -233,8 +233,8 @@ export const stripeWebhookController = async (req: Request, res: Response) => {
                     await course.save();
 
                     await OrderModel.create({
-                        courseID: course._id,
-                        userID: user._id,
+                        courseID: String(course._id),
+                        userID: String(user._id),
                         payment_info: {
                             id: session.payment_intent as string,
                             status: session.payment_status,
