@@ -11,26 +11,18 @@ const footerLinks = [
         title: "Company",
         links: [
             { label: "About us", href: "/about" },
-            { label: "Careers", href: "/careers" },
-            { label: "Blog", href: "/blog" },
-            { label: "Contact", href: "/contact" },
         ],
     },
     {
         title: "Explore",
         links: [
-            { label: "All courses", href: "/courses" },
-            { label: "Categories", href: "/categories" },
-            { label: "Become an instructor", href: "/teach" },
+            { label: "All courses", href: "/all-courses" },
         ],
     },
     {
         title: "Support",
         links: [
             { label: "FAQ", href: "/faq" },
-            { label: "Help center", href: "/help" },
-            { label: "Terms of service", href: "/terms" },
-            { label: "Privacy policy", href: "/privacy" },
         ],
     },
 ];
@@ -118,17 +110,6 @@ const Footer: FC<Props> = () => {
                     <p className="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
                         © {new Date().getFullYear()} Skillory. All rights reserved.
                     </p>
-                    <div className="flex items-center gap-5">
-                        <Link href="/terms" className="text-xs text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-accent-400 transition-colors">
-                            Terms
-                        </Link>
-                        <Link href="/privacy" className="text-xs text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-accent-400 transition-colors">
-                            Privacy
-                        </Link>
-                        <Link href="/cookies" className="text-xs text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-accent-400 transition-colors">
-                            Cookies
-                        </Link>
-                    </div>
                 </div>
             </div>
         </footer >

@@ -37,6 +37,7 @@ const SidebarProfile: FC<Props> = ({ user, avatar, active, setActive, logoutHand
                             alt={user?.name || "User avatar"}
                             width={100}
                             height={100}
+                            loading="eager"
                             className="w-full h-full object-cover"
                         />
                     ) : (

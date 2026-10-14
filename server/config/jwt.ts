@@ -25,7 +25,7 @@ export const getCookieOptions = () => {
         expires: new Date(Date.now() + accessTokenMaxAge),
         maxAge: accessTokenMaxAge,
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
     };
@@ -34,7 +34,7 @@ export const getCookieOptions = () => {
         expires: new Date(Date.now() + refreshTokenMaxAge),
         maxAge: refreshTokenMaxAge,
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
     };

@@ -178,9 +178,10 @@ export const loginUser = CatchAsyncError(async (req: Request, res: Response, nex
 
 export const logoutUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const sameSite: "lax" | "none" = process.env.NODE_ENV === "production" ? "none" : "lax";
         const cookieOptions = {
             httpOnly: true,
-            sameSite: "lax" as const,
+            sameSite,
             path: "/",
             secure: process.env.NODE_ENV === "production",
         };

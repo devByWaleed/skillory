@@ -101,6 +101,7 @@ const ProfileInfo: FC<Props> = ({ user, avatar }) => {
                             alt="Profile avatar"
                             width={80}
                             height={80}
+                            loading="eager"
                             className="w-20 h-20 rounded-full object-cover border border-slate-200 dark:border-surface-700"
                         />
                         <button
